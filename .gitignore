@@ -1,0 +1,8 @@
+logs.txt
+node_modules/
+.DS_Store
+.env
+.env.local
+*.log
+.agents/
+Web_hoc_Toan_MD/

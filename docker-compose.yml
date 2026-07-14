@@ -1,0 +1,32 @@
+version: '3.8'
+services:
+  frontend:
+    build:
+      context: ./frontend
+      target: deps # Chỉ lấy phần cài thư viện
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      # Kích hoạt chế độ lắng nghe file qua Docker (Cần thiết cho Windows)
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      # Đồng bộ code từ máy ngoài vào container
+      - ./frontend:/app
+      # Bỏ qua node_modules để không bị đè bởi máy ngoài
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./backend/.env
+    environment:
+      - GIN_MODE=debug
