@@ -79,3 +79,22 @@ func (h *Handler) GetCourseCurriculum(c *gin.Context) {
 		"data":    curriculum,
 	})
 }
+
+func (h *Handler) GetLessonPlayback(c *gin.Context) {
+	lessonID := c.Param("id")
+	if lessonID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing lesson ID"})
+		return
+	}
+
+	playbackInfo, err := h.service.GetLessonPlayback(lessonID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Playback information not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    playbackInfo,
+	})
+}

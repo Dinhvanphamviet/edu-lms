@@ -53,7 +53,7 @@ export default async function LessonDetailPage({ params }: { params: Promise<{ s
 
       <div className="w-full px-6 lg:px-10 xl:px-16 py-8 relative">
         <LessonLayoutManager 
-          content={<LessonContent />} 
+          content={<LessonContent lessonId={resolvedParams.lessonId} />} 
           sidebar={<LessonSidebar />} 
         />
       </div>

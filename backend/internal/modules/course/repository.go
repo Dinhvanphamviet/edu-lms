@@ -13,6 +13,7 @@ type Repository interface {
 	GetCourses(categorySlug string) ([]Course, error)
 	GetCourseBySlug(slug string) (*Course, error)
 	GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapterDTO, error)
+	GetVideoByLessonID(lessonID string) (*Video, error)
 	AutoMigrateAndSeed() error
 }
 
@@ -110,10 +111,18 @@ func (r *repository) GetCourseBySlug(slug string) (*Course, error) {
 }
 
 func (r *repository) AutoMigrateAndSeed() error {
-	if err := r.db.AutoMigrate(&CourseCategory{}, &CourseCategoryRelation{}, &Chapter{}, &Lesson{}); err != nil {
+	if err := r.db.AutoMigrate(&CourseCategory{}, &CourseCategoryRelation{}, &Chapter{}, &Lesson{}, &Video{}); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (r *repository) GetVideoByLessonID(lessonID string) (*Video, error) {
+	var video Video
+	if err := r.db.Where("lesson_id = ?", lessonID).First(&video).Error; err != nil {
+		return nil, err
+	}
+	return &video, nil
 }
 
 func (r *repository) GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapterDTO, error) {

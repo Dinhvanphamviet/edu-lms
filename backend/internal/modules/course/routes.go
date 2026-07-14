@@ -11,5 +11,6 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler) {
 		public.GET("/courses", handler.GetCourses)
 		public.GET("/courses/:slug", handler.GetCourseBySlug)
 		public.GET("/courses/:slug/curriculum", handler.GetCourseCurriculum)
+		public.GET("/lessons/:id/playback", handler.GetLessonPlayback)
 	}
 }

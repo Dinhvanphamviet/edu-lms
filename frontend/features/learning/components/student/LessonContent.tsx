@@ -6,9 +6,51 @@ import Link from "next/link";
 import { useLessonLayout } from "./LessonLayoutContext";
 import { cn } from "@/lib/utils";
 
-export function LessonContent() {
+import { VideoPlayer } from "./VideoPlayer";
+import { useEffect, useState } from "react";
+import axios from "axios";
+
+interface LessonContentProps {
+  lessonId?: string;
+}
+
+export function LessonContent({ lessonId }: LessonContentProps) {
   const { layoutMode } = useLessonLayout();
   const isFullscreen = layoutMode === "fullscreen";
+  const [playbackData, setPlaybackData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!lessonId) return;
+    
+    const fetchPlayback = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`http://localhost:8080/api/v1/public/lessons/${lessonId}/playback`);
+        if (res.data && res.data.data) {
+          setPlaybackData(res.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching playback info", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchPlayback();
+  }, [lessonId]);
+
+  const videoJsOptions = {
+    autoplay: false,
+    controls: true,
+    responsive: true,
+    fluid: true,
+    sources: playbackData ? [{
+      src: playbackData.playbackUrl,
+      type: 'application/x-mpegURL'
+    }] : [],
+    poster: "https://images.unsplash.com/photo-1633613286991-611fe299c4be?q=80&w=1200&auto=format&fit=crop"
+  };
 
   return (
     <div className={cn(
@@ -30,14 +72,15 @@ export function LessonContent() {
 
         {/* Video Player */}
         <div className={cn("w-full bg-black flex-shrink-0 flex items-center justify-center", isFullscreen ? "h-screen" : "aspect-[16/9]")}>
-          <video 
-            className={cn("w-full h-full", isFullscreen ? "object-contain" : "object-cover")}
-            controls 
-            poster="https://images.unsplash.com/photo-1633613286991-611fe299c4be?q=80&w=1200&auto=format&fit=crop"
-          >
-            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4" />
-            Trình duyệt của bạn không hỗ trợ xem video.
-          </video>
+          {loading ? (
+            <div className="text-white">Đang tải video...</div>
+          ) : playbackData ? (
+            <div className={cn("w-full h-full", isFullscreen ? "[&_.video-js]:h-screen" : "[&_.video-js]:aspect-[16/9]")}>
+              <VideoPlayer options={videoJsOptions} />
+            </div>
+          ) : (
+            <div className="text-white">Không thể tải video. Trình duyệt của bạn không hỗ trợ hoặc video bị lỗi.</div>
+          )}
         </div>
 
         {/* Đề thi & Tài liệu */}

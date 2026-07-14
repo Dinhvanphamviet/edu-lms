@@ -102,16 +102,33 @@ type Lesson struct {
 	Type        LessonType     `gorm:"type:lesson_type;not null" json:"type"`
 	SortOrder   int            `gorm:"type:int;not null;default:0" json:"sort_order"`
 	Content     *string        `gorm:"type:text" json:"content"`
-	VideoURL    *string        `gorm:"type:text" json:"video_url"`
 	MaxViews    *int           `gorm:"type:int;default:21" json:"max_views"`
 	IsOptional  *bool          `gorm:"type:boolean;default:false" json:"is_optional"`
 	Status      LessonStatus   `gorm:"type:lesson_status;not null;default:'DRAFT'" json:"status"`
 	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	
+	// Relations
+	Video *Video `gorm:"foreignKey:LessonID" json:"video,omitempty"`
 }
 
 func (Lesson) TableName() string { return "lessons" }
+
+type Video struct {
+	ID              uuid.UUID  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	LessonID        uuid.UUID  `gorm:"type:uuid;unique;not null" json:"lesson_id"`
+	Provider        string     `gorm:"type:varchar(30);not null;default:'BUNNY_STREAM'" json:"provider"`
+	ProviderVideoID uuid.UUID  `gorm:"type:uuid;unique;not null" json:"provider_video_id"`
+	Title           string     `gorm:"type:varchar(255);not null" json:"title"`
+	Status          string     `gorm:"type:varchar(30);not null;default:'UPLOADING'" json:"status"`
+	DurationSeconds *int       `gorm:"type:int" json:"duration_seconds"`
+	ThumbnailURL    *string    `gorm:"type:text" json:"thumbnail_url"`
+	CreatedAt       time.Time  `gorm:"autoCreateTime" json:"created_at"`
+	ProcessedAt     *time.Time `gorm:"type:timestamp with time zone" json:"processed_at"`
+}
+
+func (Video) TableName() string { return "videos" }
 
 // DTOs for frontend curriculum
 
