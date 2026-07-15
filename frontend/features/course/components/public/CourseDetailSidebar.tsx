@@ -1,13 +1,18 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { LayoutList, Layers, Star, FileText } from "lucide-react";
 import { RegisterModal } from "./RegisterModal";
 import { ActivateCourseModal } from "./ActivateCourseModal";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import api from "@/lib/api";
 
 interface CourseDetailSidebarProps {
   course: {
+    slug: string;
     title: string;
     price: number;
     originalPrice?: number;
@@ -21,6 +26,28 @@ interface CourseDetailSidebarProps {
 }
 
 export function CourseDetailSidebar({ course }: CourseDetailSidebarProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const { isAuthenticated, user } = useAuth();
+  
+  const isEnrolled = isAuthenticated && user?.enrolled_courses?.includes(course.slug);
+
+  useEffect(() => {
+    if (searchParams.get("action") === "enroll") {
+      setIsRegisterOpen(true);
+    }
+  }, [searchParams]);
+
+  const handleRegisterOpenChange = (open: boolean) => {
+    setIsRegisterOpen(open);
+    if (!open && searchParams.get("action") === "enroll") {
+      // Remove action=enroll from URL when closing the modal
+      router.replace(pathname, { scroll: false });
+    }
+  };
+
   return (
     <div className="sticky top-[100px] flex flex-col gap-4">
       {/* Khối chứa thông tin giá và nút */}
@@ -56,16 +83,36 @@ export function CourseDetailSidebar({ course }: CourseDetailSidebarProps) {
 
           {/* Call to action */}
           <div className="flex flex-col gap-3">
-            <RegisterModal>
-              <Button className="w-full h-12 bg-surface-strong hover:bg-cyan-700 text-white rounded-full font-bold text-base shadow-md uppercase">
-                Đăng kí khóa học
+            {isEnrolled ? (
+              <Button 
+                onClick={() => {
+                  // Mặc định nhảy tới danh sách bài học bằng cách trượt xuống hoặc redirect nếu cần
+                  const element = document.getElementById("curriculum-section");
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth" });
+                  } else {
+                    // Fallback
+                    window.scrollTo({ top: 500, behavior: "smooth" });
+                  }
+                }}
+                className="w-full h-12 bg-surface-strong hover:bg-cyan-700 text-white rounded-full font-bold text-base shadow-md uppercase"
+              >
+                Học ngay
               </Button>
-            </RegisterModal>
-            <ActivateCourseModal>
-              <Button variant="outline" className="w-full h-12 border-surface-strong text-surface-strong hover:bg-surface-strong/5 rounded-full font-bold text-base">
-                Kích hoạt khóa học
-              </Button>
-            </ActivateCourseModal>
+            ) : (
+              <>
+                <RegisterModal open={isRegisterOpen} onOpenChange={handleRegisterOpenChange}>
+                  <Button className="w-full h-12 bg-surface-strong hover:bg-cyan-700 text-white rounded-full font-bold text-base shadow-md uppercase">
+                    Đăng kí khóa học
+                  </Button>
+                </RegisterModal>
+                <ActivateCourseModal>
+                  <Button variant="outline" className="w-full h-12 border-surface-strong text-surface-strong hover:bg-surface-strong/5 rounded-full font-bold text-base">
+                    Kích hoạt khóa học
+                  </Button>
+                </ActivateCourseModal>
+              </>
+            )}
           </div>
 
           <hr className="border-[var(--border-default)]" />

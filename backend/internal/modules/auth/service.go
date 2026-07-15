@@ -17,6 +17,7 @@ type Service interface {
 	Login(req LoginRequest, ip, userAgent string) (*TokenResponse, string, error)
 	RefreshToken(token string, ip, userAgent string) (*TokenResponse, string, error)
 	Logout(token string) error
+	GetMe(userID string) (*UserMeResponse, error)
 }
 
 type service struct {
@@ -158,6 +159,11 @@ func (s *service) generateTokens(user *User, ip, userAgent string) (*TokenRespon
 		fullName = user.Profile.FullName
 	}
 
+	enrolledCourses, _ := s.repo.GetEnrolledCourseSlugs(user.ID.String())
+	if enrolledCourses == nil {
+		enrolledCourses = []string{}
+	}
+
 	res := &TokenResponse{
 		AccessToken: accessToken,
 	}
@@ -165,6 +171,35 @@ func (s *service) generateTokens(user *User, ip, userAgent string) (*TokenRespon
 	res.User.Email = user.Email
 	res.User.Role = user.Role
 	res.User.FullName = fullName
+	res.User.EnrolledCourses = enrolledCourses
 
 	return res, refreshToken, nil
+}
+
+func (s *service) GetMe(userID string) (*UserMeResponse, error) {
+	user, err := s.repo.FindUserByID(userID)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	enrolledCourses, _ := s.repo.GetEnrolledCourseSlugs(userID)
+	if enrolledCourses == nil {
+		enrolledCourses = []string{}
+	}
+
+	fullName := ""
+	if user.Profile != nil {
+		fullName = user.Profile.FullName
+	}
+
+	return &UserMeResponse{
+		ID:              user.ID.String(),
+		Email:           user.Email,
+		Role:            user.Role,
+		FullName:        fullName,
+		EnrolledCourses: enrolledCourses,
+	}, nil
 }

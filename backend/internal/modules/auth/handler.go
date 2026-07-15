@@ -90,6 +90,22 @@ func (h *Handler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
+func (h *Handler) GetMe(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	user, err := h.service.GetMe(userID.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
 func (h *Handler) setRefreshTokenCookie(c *gin.Context, token string) {
 	refreshDuration, _ := time.ParseDuration(h.cfg.RefreshTokenExpiration)
 	if refreshDuration == 0 {

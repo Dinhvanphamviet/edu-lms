@@ -8,15 +8,19 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Link2 } from "lucide-react";
 
 interface RegisterModalProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function RegisterModal({ children }: RegisterModalProps) {
+export function RegisterModal({ children, open, onOpenChange }: RegisterModalProps) {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {children && (
+        <DialogTrigger asChild>
+          {children}
+        </DialogTrigger>
+      )}
       <DialogContent className="w-[95vw] max-w-[800px] sm:max-w-[800px] md:max-w-[800px] md:min-h-[520px] p-8 md:p-10 border-none rounded-2xl bg-white flex flex-col justify-center items-center text-center">
         <h2 className="text-2xl md:text-3xl font-bold text-surface-strong mb-6">
           Hướng dẫn đăng kí khóa học

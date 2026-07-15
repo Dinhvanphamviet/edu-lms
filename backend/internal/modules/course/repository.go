@@ -13,8 +13,12 @@ type Repository interface {
 	GetCourses(categorySlug string) ([]Course, error)
 	GetCourseBySlug(slug string) (*Course, error)
 	GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapterDTO, error)
+	GetLessonByID(lessonID string) (*Lesson, error)
 	GetVideoByLessonID(lessonID string) (*Video, error)
 	AutoMigrateAndSeed() error
+	FindUserLessonProgress(userID, lessonID string) (*UserLessonProgress, error)
+	IncrementLessonViews(userID, lessonID string) (*UserLessonProgress, error)
+	CheckEnrollment(userID, courseID string) (bool, error)
 }
 
 type repository struct {
@@ -110,11 +114,48 @@ func (r *repository) GetCourseBySlug(slug string) (*Course, error) {
 	return &course, nil
 }
 
-func (r *repository) AutoMigrateAndSeed() error {
-	if err := r.db.AutoMigrate(&CourseCategory{}, &CourseCategoryRelation{}, &Chapter{}, &Lesson{}, &Video{}); err != nil {
-		return err
+func (r *repository) GetLessonByID(lessonID string) (*Lesson, error) {
+	var lesson Lesson
+	if err := r.db.Preload("Chapter.Course").Preload("Assessments").Preload("Resources").Where("id = ?", lessonID).First(&lesson).Error; err != nil {
+		return nil, err
 	}
+	return &lesson, nil
+}
+
+func (r *repository) AutoMigrateAndSeed() error {
+	// Ignore errors due to Postgres ENUM casting issues with GORM
+	r.db.AutoMigrate(&CourseCategory{}, &CourseCategoryRelation{}, &Chapter{}, &Lesson{}, &Video{}, &Assessment{}, &LessonResource{}, &UserLessonProgress{})
 	return nil
+}
+
+func (r *repository) FindUserLessonProgress(userID, lessonID string) (*UserLessonProgress, error) {
+	var progress UserLessonProgress
+	if err := r.db.Where("user_id = ? AND lesson_id = ?", userID, lessonID).First(&progress).Error; err != nil {
+		return nil, err
+	}
+	return &progress, nil
+}
+
+func (r *repository) IncrementLessonViews(userID, lessonID string) (*UserLessonProgress, error) {
+	var progress UserLessonProgress
+	// Using FirstOrCreate
+	userUID, _ := uuid.Parse(userID)
+	lessonUID, _ := uuid.Parse(lessonID)
+	
+	err := r.db.Where(UserLessonProgress{UserID: userUID, LessonID: lessonUID}).
+		Assign(UserLessonProgress{}).
+		FirstOrCreate(&progress).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Increment
+	progress.UsedViews += 1
+	if err := r.db.Save(&progress).Error; err != nil {
+		return nil, err
+	}
+
+	return &progress, nil
 }
 
 func (r *repository) GetVideoByLessonID(lessonID string) (*Video, error) {
@@ -165,7 +206,7 @@ func (r *repository) GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapte
 	`, chapterIDs).Scan(&rows)
 
 	lessonMap := make(map[uuid.UUID][]CurriculumThemeDTO)
-	type chapStats struct{ lessons, exams int }
+	type chapStats struct{ lessons, exams, docs int }
 	chapterStatsMap := make(map[uuid.UUID]*chapStats)
 
 	for _, ch := range chapters {
@@ -193,6 +234,7 @@ func (r *repository) GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapte
 		stats := chapterStatsMap[row.ChapterID]
 		stats.lessons += lessonCount
 		stats.exams += examCount
+		stats.docs += row.DocCount
 	}
 
 	dtos := make([]CurriculumChapterDTO, 0, len(chapters))
@@ -205,7 +247,7 @@ func (r *repository) GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapte
 		dtos = append(dtos, CurriculumChapterDTO{
 			ID:     ch.ID.String(),
 			Title:  ch.Title,
-			Stats:  fmt.Sprintf("%d Bài giảng / %d Bài thi online", stats.lessons, stats.exams),
+			Stats:  fmt.Sprintf("%d Bài giảng / %d Bài tập / %d Tài liệu", stats.lessons, stats.exams, stats.docs),
 			Themes: themes,
 		})
 	}
@@ -213,4 +255,13 @@ func (r *repository) GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapte
 	return dtos, nil
 }
 
-
+func (r *repository) CheckEnrollment(userID, courseID string) (bool, error) {
+	var count int64
+	err := r.db.Model(&Enrollment{}).
+		Where("user_id = ? AND course_id = ? AND status IN ?", userID, courseID, []string{"ACTIVE", "PENDING"}).
+		Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}

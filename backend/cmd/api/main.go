@@ -73,18 +73,16 @@ func main() {
 		// Course Routes
 		course.RegisterRoutes(apiGroup, courseHandler)
 
+		// Student Routes (Protected)
+		studentGroup := apiGroup.Group("/student")
+		studentGroup.Use(middleware.RequireAuth(cfg))
+		course.RegisterProtectedRoutes(studentGroup, courseHandler)
+
 		// Example protected route
 		protected := apiGroup.Group("/protected")
 		protected.Use(middleware.RequireAuth(cfg))
 		{
-			protected.GET("/me", func(c *gin.Context) {
-				email, _ := c.Get("email")
-				role, _ := c.Get("role")
-				c.JSON(http.StatusOK, gin.H{
-					"email": email,
-					"role":  role,
-				})
-			})
+			protected.GET("/me", authHandler.GetMe)
 
 			// Example role-based route
 			adminOnly := protected.Group("/admin")
