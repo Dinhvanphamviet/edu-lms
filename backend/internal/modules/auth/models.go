@@ -56,9 +56,18 @@ type LoginRequest struct {
 type TokenResponse struct {
 	AccessToken string `json:"access_token"`
 	User        struct {
-		ID       string `json:"id"`
-		Email    string `json:"email"`
-		Role     string `json:"role"`
-		FullName string `json:"full_name"`
+		ID              string   `json:"id"`
+		Email           string   `json:"email"`
+		Role            string   `json:"role"`
+		FullName        string   `json:"full_name"`
+		EnrolledCourses []string `json:"enrolled_courses"`
 	} `json:"user"`
+}
+
+type UserMeResponse struct {
+	ID              string   `json:"id"`
+	Email           string   `json:"email"`
+	Role            string   `json:"role"`
+	FullName        string   `json:"full_name"`
+	EnrolledCourses []string `json:"enrolled_courses"`
 }

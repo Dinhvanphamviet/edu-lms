@@ -105,7 +105,7 @@ export const MOCK_COURSE_CURRICULUM = [
     title: "Phụ lục. 8 chủ đề Toán 10, 11 cần nắm để học lên chương trình Toán 12",
     stats: "8 Bài giảng / 8 Bài thi online",
     themes: [
-      { id: "t1", title: "Theme 1. Các quy tắc tính đạo hàm", stats: "1 Bài giảng / 1 Bài tập / 3 Tài liệu" },
+      { id: "3677420a-5889-4ff4-aec5-6cc8e0c7389b", title: "Theme 1. Các quy tắc tính đạo hàm", stats: "1 Bài giảng / 1 Bài tập / 3 Tài liệu" },
       { id: "t2", title: "Theme 2. Đạo hàm hàm hợp - đạo hàm cấp hai", stats: "1 Bài giảng / 1 Bài tập / 3 Tài liệu" },
       { id: "t3", title: "Theme 3. Các khái niệm mở đầu về vectơ", stats: "1 Bài giảng / 1 Bài tập / 3 Tài liệu" },
       { id: "t4", title: "Theme 4. Tổng và hiệu của hai vectơ", stats: "1 Bài giảng / 1 Bài tập / 3 Tài liệu" }

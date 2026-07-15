@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import axios from "axios";
 import { Search, FileText, Edit3 } from "lucide-react";
 import { ViewModeToolbar } from "./ViewModeToolbar";
-import { MOCK_COURSE_CURRICULUM, MOCK_COURSES } from "@/constants/mock-data";
+import { MOCK_COURSES } from "@/constants/mock-data";
 import {
   Accordion,
   AccordionContent,
@@ -14,14 +15,15 @@ import {
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 
-export function LessonSidebar() {
+export function LessonSidebar({ courseSlug, initialCurriculum = [], courseStats }: { courseSlug?: string, initialCurriculum?: any[], courseStats?: any }) {
   const params = useParams();
   const activeLessonId = params?.lessonId as string;
-  const courseSlug = params?.slug as string;
+  
+  const curriculum = initialCurriculum;
 
   return (
     <div className="flex flex-col gap-4 h-full">
-      
+
       {/* 2. Danh sách bài học (Curriculum) */}
       <div className="bg-white rounded-xl shadow-sm border border-[var(--border-default)] p-4 flex flex-col gap-4">
         {/* View Modes */}
@@ -41,8 +43,8 @@ export function LessonSidebar() {
         </div>
 
         {/* Accordion */}
-        <Accordion type="single" collapsible defaultValue="chap-1" className="w-full flex flex-col gap-2">
-          {MOCK_COURSE_CURRICULUM.map((chapter) => (
+        <Accordion type="single" collapsible defaultValue={curriculum.length > 0 ? curriculum[0].id : undefined} className="w-full flex flex-col gap-2">
+          {curriculum.map((chapter) => (
             <AccordionItem key={chapter.id} value={chapter.id} className="border border-[var(--border-default)] rounded-xl bg-white overflow-hidden px-0">
               <AccordionTrigger className="px-4 py-3 hover:bg-[var(--surface-muted)] transition-colors hover:no-underline group">
                 <div className="flex flex-col items-start gap-0.5 text-left pr-2">
@@ -52,16 +54,16 @@ export function LessonSidebar() {
               </AccordionTrigger>
               <AccordionContent className="pt-0 pb-0">
                 <div className="flex flex-col">
-                  {chapter.themes.map((theme, idx) => {
+                  {chapter.themes?.map((theme: any, idx: number) => {
                     const isActive = theme.id === activeLessonId;
                     return (
-                      <Link href={`/courses/${courseSlug}/bai-giang/${theme.id}`} key={theme.id} className={cn(
+                      <Link prefetch={true} href={`/courses/${courseSlug}/bai-giang/${theme.id}`} key={theme.id} className={cn(
                         "flex items-start px-4 py-3 border-t border-[var(--border-default)] transition-colors cursor-pointer group relative !no-underline hover:!no-underline",
                         isActive ? "bg-cyan-50" : "bg-white hover:bg-slate-50"
                       )}>
                         {/* Timeline Segment */}
                         <div className="absolute left-[27px] top-0 bottom-0 w-[2px] bg-surface-strong z-0" />
-                        
+
                         <div className="relative w-6 flex-shrink-0 flex justify-center mt-0.5 z-10">
                           <div className={cn(
                             "size-6 rounded-full flex items-center justify-center text-xs font-bold z-10",
@@ -94,7 +96,7 @@ export function LessonSidebar() {
         <div className="flex flex-col gap-3 text-sm text-[var(--text-primary)]/80">
           <button className="flex items-center gap-3 hover:text-surface-strong transition-colors">
             <FileText className="size-5" />
-            Tài liệu: <span className="font-bold text-surface-strong">{MOCK_COURSES[0].stats?.documents || 186}</span>
+            Tài liệu: <span className="font-bold text-surface-strong">{courseStats?.documents || 0}</span>
           </button>
           <button className="flex items-center gap-3 hover:text-surface-strong transition-colors">
             <Edit3 className="size-5" />
@@ -102,7 +104,7 @@ export function LessonSidebar() {
           </button>
         </div>
       </div>
-      
+
     </div>
   );
 }

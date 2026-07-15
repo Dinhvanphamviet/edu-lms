@@ -8,6 +8,7 @@ export interface User {
   role: string;
   full_name: string;
   avatar_url?: string;
+  enrolled_courses?: string[];
 }
 
 interface AuthState {

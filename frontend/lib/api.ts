@@ -29,9 +29,10 @@ const processQueue = (error: any, token: string | null = null) => {
 // Interceptor to add access token to requests
 api.interceptors.request.use(
   (config) => {
-    // We will inject the token from Zustand store directly when using the api, 
-    // or we can read it from localStorage if we decide to store it there.
-    // For now, Zustand handles passing the token or we can inject it via a global state reader.
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => Promise.reject(error)

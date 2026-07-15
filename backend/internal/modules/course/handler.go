@@ -79,3 +79,81 @@ func (h *Handler) GetCourseCurriculum(c *gin.Context) {
 		"data":    curriculum,
 	})
 }
+
+func (h *Handler) GetLessonPlayback(c *gin.Context) {
+	lessonID := c.Param("id")
+	if lessonID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing lesson ID"})
+		return
+	}
+
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	playbackInfo, err := h.service.GetLessonPlayback(userID.(string), lessonID)
+	if err != nil {
+		if err.Error() == "MAX_VIEWS_EXCEEDED" {
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": "Bạn đã hết lượt xem cho bài giảng này",
+				"data":  playbackInfo,
+			})
+			return
+		}
+		c.JSON(http.StatusNotFound, gin.H{"error": "Playback information not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    playbackInfo,
+	})
+}
+
+func (h *Handler) GetLessonByID(c *gin.Context) {
+	lessonID := c.Param("id")
+	if lessonID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing lesson ID"})
+		return
+	}
+
+	lesson, err := h.service.GetLessonByID(lessonID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Lesson not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    lesson,
+	})
+}
+
+func (h *Handler) GetEnrollmentStatus(c *gin.Context) {
+	courseSlug := c.Param("slug")
+	if courseSlug == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing course slug"})
+		return
+	}
+
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	enrolled, err := h.service.CheckEnrollmentStatus(userID.(string), courseSlug)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check enrollment status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data": map[string]interface{}{
+			"enrolled": enrolled,
+		},
+	})
+}

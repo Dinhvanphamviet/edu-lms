@@ -13,6 +13,7 @@ type Repository interface {
 	CreateSession(session *Session) error
 	FindSessionByToken(token string) (*Session, error)
 	RevokeSession(token string) error
+	GetEnrolledCourseSlugs(userID string) ([]string, error)
 }
 
 type repository struct {
@@ -74,4 +75,14 @@ func (r *repository) FindSessionByToken(token string) (*Session, error) {
 
 func (r *repository) RevokeSession(token string) error {
 	return r.db.Model(&Session{}).Where("refresh_token = ?", token).Update("is_revoked", true).Error
+}
+
+func (r *repository) GetEnrolledCourseSlugs(userID string) ([]string, error) {
+	var slugs []string
+	err := r.db.Table("courses c").
+		Select("c.slug").
+		Joins("JOIN enrollments e ON c.id = e.course_id").
+		Where("e.user_id = ? AND e.status = ?", userID, "ACTIVE").
+		Pluck("c.slug", &slugs).Error
+	return slugs, err
 }

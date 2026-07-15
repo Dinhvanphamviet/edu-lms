@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, PlayCircle, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,19 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { CurriculumChapter } from "@/features/course/api/course.api";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import api from "@/lib/api";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface CourseDetailContentProps {
   description?: string;
@@ -25,8 +38,31 @@ export function CourseDetailContent({ description, courseSlug, curriculum }: Cou
   const [expandedChapters, setExpandedChapters] = useState<string[]>(
     curriculum.length > 0 ? [curriculum[0].id] : []
   );
-
+  
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+  const [showEnrollmentDialog, setShowEnrollmentDialog] = useState(false);
+  
+  const isEnrolled = isAuthenticated && user?.enrolled_courses?.includes(courseSlug);
   const lowerQuery = searchQuery.trim().toLowerCase();
+
+  const handleLessonClick = async (e: React.MouseEvent, lessonId: string) => {
+    e.preventDefault();
+
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
+    if (isEnrolled === true) {
+      router.push(`/courses/${courseSlug}/bai-giang/${lessonId}`);
+      return;
+    } else if (isEnrolled === false) {
+      setShowEnrollmentDialog(true);
+      return;
+    }
+
+  };
 
   const filteredCurriculum = curriculum.map(chapter => {
     const chapterMatch = chapter.title.toLowerCase().includes(lowerQuery);
@@ -104,38 +140,44 @@ export function CourseDetailContent({ description, courseSlug, curriculum }: Cou
               </div>
 
               {/* Danh sách bài học */}
-              <div className="flex flex-col gap-4">
+              <div id="curriculum-section" className="flex flex-col gap-4 scroll-mt-28">
                 <h2 className="text-xl font-bold text-[var(--surface-strong)]">Danh sách bài học</h2>
 
                 {/* Search */}
-                <div className="relative w-full">
-                  <div className="relative flex items-center w-full h-12 rounded-full bg-[var(--surface-muted)] overflow-hidden border border-transparent focus-within:border-[var(--surface-strong)] transition-colors px-4">
-                    <Search className="size-5 text-[var(--text-primary)]/40 mr-3 flex-shrink-0" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setSearchQuery(val);
-                        if (val.trim()) {
-                          const lowerVal = val.trim().toLowerCase();
-                          const matchedIds = curriculum
-                            .filter(ch => 
-                               ch.title.toLowerCase().includes(lowerVal) || 
-                               ch.themes.some(t => t.title.toLowerCase().includes(lowerVal))
-                            )
-                            .map(ch => ch.id);
-                          setExpandedChapters(matchedIds);
-                        }
-                      }}
-                      placeholder="Tìm kiếm Đề thi - Bài học tại đây"
-                      className="w-full h-full bg-transparent border-none outline-none text-base text-[var(--text-primary)] placeholder:text-[var(--text-primary)]/40 font-sans"
-                    />
+                {curriculum.length > 0 && (
+                  <div className="relative w-full">
+                    <div className="relative flex items-center w-full h-12 rounded-full bg-[var(--surface-muted)] overflow-hidden border border-transparent focus-within:border-[var(--surface-strong)] transition-colors px-4">
+                      <Search className="size-5 text-[var(--text-primary)]/40 mr-3 flex-shrink-0" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSearchQuery(val);
+                          if (val.trim()) {
+                            const lowerVal = val.trim().toLowerCase();
+                            const matchedIds = curriculum
+                              .filter(ch => 
+                                 ch.title.toLowerCase().includes(lowerVal) || 
+                                 ch.themes.some(t => t.title.toLowerCase().includes(lowerVal))
+                              )
+                              .map(ch => ch.id);
+                            setExpandedChapters(matchedIds);
+                          }
+                        }}
+                        placeholder="Tìm kiếm Đề thi - Bài học tại đây"
+                        className="w-full h-full bg-transparent border-none outline-none text-base text-[var(--text-primary)] placeholder:text-[var(--text-primary)]/40 font-sans"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Accordion Curriculum */}
-                {filteredCurriculum.length === 0 ? (
+                {curriculum.length === 0 ? (
+                  <div className="py-8 text-center text-[var(--text-primary)]/60 text-base font-medium border border-dashed border-[var(--border-default)] rounded-xl bg-slate-50">
+                    Khóa học đang được cập nhật bài giảng.
+                  </div>
+                ) : filteredCurriculum.length === 0 ? (
                   <div className="py-8 text-center text-[var(--text-primary)]/60 text-sm font-medium border border-dashed border-[var(--border-default)] rounded-xl">
                     Không tìm thấy bài học nào phù hợp với "{searchQuery}"
                   </div>
@@ -157,7 +199,12 @@ export function CourseDetailContent({ description, courseSlug, curriculum }: Cou
                         <AccordionContent className="pt-0 pb-0">
                           <div className="flex flex-col">
                             {chapter.themes.map((theme, idx) => (
-                              <Link key={theme.id} href={`/courses/${courseSlug}/bai-giang/${theme.id}`} className="flex items-start px-5 py-4 border-t border-[var(--border-default)] hover:bg-slate-50 transition-colors cursor-pointer group relative !no-underline hover:!no-underline">
+                              <a 
+                                key={theme.id} 
+                                href={`/courses/${courseSlug}/bai-giang/${theme.id}`}
+                                onClick={(e) => handleLessonClick(e, theme.id)}
+                                className="flex items-start px-5 py-4 border-t border-[var(--border-default)] hover:bg-slate-50 transition-colors cursor-pointer group relative !no-underline hover:!no-underline"
+                              >
                                 {/* Timeline Segment */}
                                 <div className="absolute left-[33px] top-0 bottom-0 w-[2px] bg-surface-strong z-0" />
   
@@ -174,7 +221,7 @@ export function CourseDetailContent({ description, courseSlug, curriculum }: Cou
                                     {theme.stats}
                                   </span>
                                 </div>
-                              </Link>
+                              </a>
                             ))}
                           </div>
                         </AccordionContent>
@@ -199,6 +246,35 @@ export function CourseDetailContent({ description, courseSlug, curriculum }: Cou
           )}
         </div>
       </div>
+
+      <Dialog open={showEnrollmentDialog} onOpenChange={setShowEnrollmentDialog}>
+        <DialogContent className="w-[95vw] max-w-[500px] p-8 border-none rounded-3xl bg-white flex flex-col justify-center items-center text-center">
+          <h2 className="text-2xl font-bold text-[var(--surface-strong)] mb-4">
+            Yêu cầu kích hoạt
+          </h2>
+          <p className="text-base text-[var(--text-primary)]/80 mb-8">
+            Bạn chưa kích hoạt khóa học này. Vui lòng đăng ký hoặc nhập mã kích hoạt để xem bài giảng!
+          </p>
+          <div className="flex flex-row w-full gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowEnrollmentDialog(false)}
+              className="flex-1 h-12 rounded-xl border-[var(--surface-strong)] text-[var(--surface-strong)] hover:bg-[var(--surface-strong)]/5 font-semibold text-base"
+            >
+              Đóng
+            </Button>
+            <Button 
+              onClick={() => {
+                setShowEnrollmentDialog(false);
+                router.push(`/courses/${courseSlug}?action=enroll`);
+              }}
+              className="flex-1 h-12 rounded-xl bg-[var(--surface-strong)] hover:bg-[var(--surface-strong)]/90 text-white font-semibold text-base shadow-sm"
+            >
+              Đăng ký ngay
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
