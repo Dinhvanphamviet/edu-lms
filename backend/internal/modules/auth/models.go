@@ -6,6 +6,13 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	RoleStudent   = "STUDENT"
+	RoleAssistant = "ASSISTANT"
+	RoleTeacher   = "TEACHER"
+	RoleAdmin     = "ADMIN"
+)
+
 // Gorm Models mapping to existing DB
 type User struct {
 	ID           uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
