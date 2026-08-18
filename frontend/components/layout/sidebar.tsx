@@ -172,31 +172,39 @@ export function Sidebar({
         </div>
 
         {/* Profile Card */}
-        <div className="bg-[var(--surface-muted)] rounded-xl p-4 mb-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="size-10 rounded-full bg-[var(--surface-strong)]/20 flex-shrink-0 flex items-center justify-center overflow-hidden">
-              {/* Avatar placeholder */}
-              <span className="text-[var(--surface-strong)] font-bold">ĐV</span>
+        <div className="group relative overflow-hidden bg-[var(--surface-base)] border border-[var(--border-default)] rounded-2xl p-4 mb-6 shadow-sm transition-all hover:shadow-md hover:border-[var(--border-default)]">
+          {/* Subtle background accent */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--surface-strong)]/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none transition-opacity group-hover:opacity-100 opacity-60" />
+          
+          <div className="relative flex items-center gap-3.5 mb-4">
+            <div className="size-12 rounded-full bg-[var(--surface-muted)] border border-[var(--border-default)] shadow-sm flex-shrink-0 flex items-center justify-center overflow-hidden">
+              <span className="text-[var(--surface-strong)] font-bold text-sm tracking-tight">ĐV</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1">
-                <h4 className="text-sm font-bold text-[var(--text-primary)] truncate">Đinh Việt</h4>
+            
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-[var(--text-primary)] truncate tracking-tight">Đinh Việt</h4>
                 <BadgeCheck className="size-4 text-[var(--surface-strong)] flex-shrink-0" />
               </div>
-              <Button asChild size="sm" className="h-6 mt-1 text-[10px] px-3 bg-[var(--surface-strong)] text-white hover:bg-[var(--surface-strong)]/90 rounded-full">
-                <a href="https://www.facebook.com/tolavietdayahihi" target="_blank" rel="noopener noreferrer">
-                  Theo dõi
-                </a>
-              </Button>
+              <span className="text-[11px] text-[var(--text-primary)]/60 font-medium truncate mt-0.5">Giảng viên Chuyên môn</span>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center justify-center h-6 px-3 bg-white text-[var(--surface-strong)] text-[10px] font-medium rounded-full shadow-sm">
-              SOICT
-            </span>
-            <span className="inline-flex items-center justify-center h-6 px-3 bg-white text-[var(--surface-strong)] text-[10px] font-medium rounded-full shadow-sm">
-              HUST
-            </span>
+
+          <div className="relative flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-1.5">
+              <span className="inline-flex items-center justify-center px-2 py-1 bg-[var(--surface-muted)] text-[var(--text-primary)]/80 text-[10px] font-semibold rounded-md border border-[var(--border-default)]/60 uppercase tracking-wider">
+                SOICT
+              </span>
+              <span className="inline-flex items-center justify-center px-2 py-1 bg-[var(--surface-muted)] text-[var(--text-primary)]/80 text-[10px] font-semibold rounded-md border border-[var(--border-default)]/60 uppercase tracking-wider">
+                HUST
+              </span>
+            </div>
+            
+            <Button asChild size="sm" className="h-7 px-4 text-[11px] font-bold bg-[var(--surface-strong)] hover:bg-[var(--surface-strong)]/90 text-white rounded-full transition-colors shadow-sm flex-shrink-0 w-full xl:w-auto">
+              <a href="https://www.facebook.com/tolavietdayahihihi" target="_blank" rel="noopener noreferrer">
+                Theo dõi
+              </a>
+            </Button>
           </div>
         </div>
 

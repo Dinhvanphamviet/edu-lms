@@ -17,5 +17,8 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler) {
 
 func RegisterProtectedRoutes(router *gin.RouterGroup, handler *Handler) {
 	router.GET("/lessons/:id/playback", handler.GetLessonPlayback)
+	router.GET("/lessons/:id/progress", handler.GetLessonProgress)
+	router.POST("/lessons/:id/complete", handler.MarkLessonCompleted)
 	router.GET("/courses/:slug/enrollment-status", handler.GetEnrollmentStatus)
+	router.GET("/my-courses", handler.GetMyCourses)
 }

@@ -13,12 +13,12 @@ import { HeaderAuthControls } from "./HeaderAuthControls";
 export function Header() {
   const pathname = usePathname();
 
-  const isCourseDetailPage = pathname.startsWith("/courses/") && pathname.length > "/courses/".length;
+  const showLogo = pathname.startsWith("/courses/") && pathname.length > "/courses/".length || pathname.startsWith("/my-courses");
 
   return (
     <header className="h-20 border-b border-[var(--border-default)] bg-cyan-50 sticky top-0 z-50 px-6 flex items-center justify-between">
-      {/* Logo for Course Detail Page */}
-      {isCourseDetailPage && (
+      {/* Logo for Course Detail Page and My Courses Page */}
+      {showLogo && (
         <Link href="/" className="flex items-center gap-2.5 group mr-4 lg:mr-8">
           <div className="bg-gradient-to-br from-surface-strong-light to-surface-strong-dark size-8 rounded-xl flex items-center justify-center text-white shadow-sm shadow-surface-strong-light/20 group-hover:scale-105 transition-transform">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-4.5"><path d="M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4Zm0 0c2 2.67 4 4 6 4a4 4 0 1 0 0-8c-2 0-4 1.33-6 4Z"/></svg>
