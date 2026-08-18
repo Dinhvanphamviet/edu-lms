@@ -28,7 +28,7 @@ export function useLogin() {
           redirectUrl = "/assistant";
           break;
         case "STUDENT":
-          redirectUrl = "/student"; // or keep "/" if student dashboard is public
+          redirectUrl = "/";
           break;
       }
       router.push(redirectUrl);
