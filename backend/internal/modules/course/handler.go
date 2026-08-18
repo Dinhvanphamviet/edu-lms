@@ -157,3 +157,79 @@ func (h *Handler) GetEnrollmentStatus(c *gin.Context) {
 		},
 	})
 }
+
+func (h *Handler) GetMyCourses(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	courses, err := h.service.GetEnrolledCourses(userID.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch enrolled courses"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    courses,
+	})
+}
+
+func (h *Handler) MarkLessonCompleted(c *gin.Context) {
+	lessonID := c.Param("id")
+	if lessonID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing lesson ID"})
+		return
+	}
+
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	err := h.service.MarkLessonAsCompleted(userID.(string), lessonID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark lesson as completed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data":    true,
+	})
+}
+
+func (h *Handler) GetLessonProgress(c *gin.Context) {
+	lessonID := c.Param("id")
+	if lessonID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing lesson ID"})
+		return
+	}
+
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	progress, err := h.service.GetLessonProgress(userID.(string), lessonID)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "success",
+			"data": map[string]interface{}{
+				"isCompleted": false,
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "success",
+		"data": map[string]interface{}{
+			"isCompleted": progress.IsCompleted,
+		},
+	})
+}

@@ -113,3 +113,38 @@ export async function getCourseCurriculum(slug: string): Promise<CurriculumChapt
 	const result = await res.json();
 	return result.data;
 }
+
+export interface CourseWithProgress extends Course {
+  progress: {
+    completed_lessons: number;
+    total_lessons: number;
+  };
+}
+
+export async function getMyCourses(): Promise<CourseWithProgress[]> {
+  const isServer = typeof window === "undefined";
+  
+  if (isServer) {
+    // For server components, we might need a different approach or pass headers
+    throw new Error("getMyCourses should be called from client-side with useAuth or api interceptor");
+  }
+
+  // Import api here to avoid circular dependencies or server-side issues
+  const { default: api } = await import("@/lib/api");
+  
+  const res = await api.get("/student/my-courses");
+  return res.data.data;
+}
+
+export async function markLessonCompleted(lessonId: string): Promise<boolean> {
+  const isServer = typeof window === "undefined";
+  
+  if (isServer) {
+    throw new Error("markLessonCompleted should be called from client-side with useAuth or api interceptor");
+  }
+
+  const { default: api } = await import("@/lib/api");
+  
+  const res = await api.post(`/student/lessons/${lessonId}/complete`);
+  return res.data.data;
+}

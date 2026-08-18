@@ -19,6 +19,9 @@ type Repository interface {
 	FindUserLessonProgress(userID, lessonID string) (*UserLessonProgress, error)
 	IncrementLessonViews(userID, lessonID string) (*UserLessonProgress, error)
 	CheckEnrollment(userID, courseID string) (bool, error)
+	GetEnrolledCoursesWithProgress(userID string) ([]CourseWithProgressDTO, error)
+	MarkLessonAsCompleted(userID, lessonID string) error
+	GetLessonProgress(userID, lessonID string) (*UserLessonProgress, error)
 }
 
 type repository struct {
@@ -264,4 +267,135 @@ func (r *repository) CheckEnrollment(userID, courseID string) (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func (r *repository) GetEnrolledCoursesWithProgress(userID string) ([]CourseWithProgressDTO, error) {
+	var courses []Course
+	// 1. Get courses that the user is enrolled in
+	err := r.db.Joins("JOIN enrollments ON enrollments.course_id = courses.id").
+		Where("enrollments.user_id = ? AND enrollments.status IN ?", userID, []string{"ACTIVE", "PENDING"}).
+		Find(&courses).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(courses) == 0 {
+		return []CourseWithProgressDTO{}, nil
+	}
+
+	var results []CourseWithProgressDTO
+	
+	courseIDs := make([]uuid.UUID, len(courses))
+	for i, c := range courses {
+		courseIDs[i] = c.ID
+	}
+
+	type courseStatsRow struct {
+		CourseID         uuid.UUID `gorm:"column:course_id"`
+		TotalLessons     int       `gorm:"column:total_lessons"`
+		CompletedLessons int       `gorm:"column:completed_lessons"`
+		Exams            int       `gorm:"column:exams"`
+		Documents        int       `gorm:"column:documents"`
+	}
+	
+	var statsRows []courseStatsRow
+	err = r.db.Raw(`
+		SELECT 
+			c_id AS course_id,
+			COALESCE(lesson_counts.cnt, 0) AS total_lessons,
+			COALESCE(completed_counts.cnt, 0) AS completed_lessons,
+			COALESCE(exam_counts.cnt, 0) AS exams,
+			COALESCE(doc_counts.cnt, 0) AS documents
+		FROM UNNEST(?::uuid[]) AS c_id
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*) AS cnt FROM lessons l 
+			JOIN chapters ch ON l.chapter_id = ch.id 
+			WHERE ch.course_id = c_id AND l.deleted_at IS NULL AND ch.deleted_at IS NULL
+		) lesson_counts ON true
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*) AS cnt FROM user_lesson_progress ulp 
+			JOIN lessons l ON ulp.lesson_id = l.id 
+			JOIN chapters ch ON l.chapter_id = ch.id 
+			WHERE ch.course_id = c_id AND ulp.user_id = ?::uuid AND ulp.is_completed = true 
+			AND ulp.deleted_at IS NULL AND l.deleted_at IS NULL AND ch.deleted_at IS NULL
+		) completed_counts ON true
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*) AS cnt FROM assessments a 
+			JOIN lessons l ON a.lesson_id = l.id 
+			JOIN chapters ch ON l.chapter_id = ch.id 
+			WHERE ch.course_id = c_id AND l.deleted_at IS NULL AND ch.deleted_at IS NULL
+		) exam_counts ON true
+		LEFT JOIN LATERAL (
+			SELECT COUNT(*) AS cnt FROM lesson_resources lr 
+			JOIN lessons l ON lr.lesson_id = l.id 
+			JOIN chapters ch ON l.chapter_id = ch.id 
+			WHERE ch.course_id = c_id AND l.deleted_at IS NULL AND ch.deleted_at IS NULL
+		) doc_counts ON true
+	`, pq.Array(courseIDs), userID).Scan(&statsRows).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	statsMap := make(map[uuid.UUID]courseStatsRow)
+	for _, row := range statsRows {
+		statsMap[row.CourseID] = row
+	}
+
+	for _, c := range courses {
+		stats := statsMap[c.ID]
+		results = append(results, CourseWithProgressDTO{
+			ID:          c.ID.String(),
+			Title:       c.Title,
+			Slug:        c.Slug,
+			CoverImage:  c.CoverImage,
+			ReleaseDate: c.ReleaseDate,
+			Tags:        c.Tags,
+			Stats: CourseStats{
+				Lessons:   stats.TotalLessons,
+				Exams:     stats.Exams,
+				Documents: stats.Documents,
+			},
+			Progress: CourseProgress{
+				TotalLessons:     stats.TotalLessons,
+				CompletedLessons: stats.CompletedLessons,
+			},
+		})
+	}
+
+	return results, nil
+}
+
+func (r *repository) MarkLessonAsCompleted(userID, lessonID string) error {
+	userUID, _ := uuid.Parse(userID)
+	lessonUID, _ := uuid.Parse(lessonID)
+	
+	var progress UserLessonProgress
+	err := r.db.Where(UserLessonProgress{UserID: userUID, LessonID: lessonUID}).
+		Assign(UserLessonProgress{IsCompleted: true}).
+		FirstOrCreate(&progress).Error
+	
+	if err != nil {
+		return err
+	}
+
+	if !progress.IsCompleted {
+		progress.IsCompleted = true
+		return r.db.Save(&progress).Error
+	}
+
+	return nil
+}
+
+func (r *repository) GetLessonProgress(userID, lessonID string) (*UserLessonProgress, error) {
+	userUID, _ := uuid.Parse(userID)
+	lessonUID, _ := uuid.Parse(lessonID)
+	
+	var progress UserLessonProgress
+	err := r.db.Where("user_id = ? AND lesson_id = ?", userUID, lessonUID).First(&progress).Error
+	if err != nil {
+		return nil, err
+	}
+	return &progress, nil
 }
