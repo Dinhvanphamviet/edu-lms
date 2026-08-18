@@ -1,6 +1,7 @@
 package home
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -43,8 +44,10 @@ func (r *repository) GetCollections() ([]CourseCollection, error) {
 	if err == nil {
 		for i := range collections {
 			courses := make([]Course, 0)
-			r.db.Raw("SELECT c.* FROM courses c JOIN collection_courses cc ON c.id = cc.course_id WHERE cc.collection_id = ?", collections[i].ID).Scan(&courses)
-
+			err := r.db.Raw("SELECT c.* FROM courses c JOIN collection_courses cc ON c.id = cc.course_id WHERE cc.collection_id = ? AND c.deleted_at IS NULL", collections[i].ID).Scan(&courses).Error
+			if err != nil {
+				fmt.Println("Error fetching courses for collection:", err)
+			}
 			for j := range courses {
 				r.db.Raw("SELECT COUNT(*) FROM lessons l JOIN chapters c ON l.chapter_id = c.id WHERE c.course_id = ?", courses[j].ID).Scan(&courses[j].Stats.Lessons)
 				r.db.Raw("SELECT COUNT(*) FROM assessments a JOIN lessons l ON a.lesson_id = l.id JOIN chapters c ON l.chapter_id = c.id WHERE c.course_id = ?", courses[j].ID).Scan(&courses[j].Stats.Exams)
