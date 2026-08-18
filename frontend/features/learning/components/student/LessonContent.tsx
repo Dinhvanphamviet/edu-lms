@@ -1,11 +1,13 @@
 "use client";
 
-import { ExternalLink, Clock, AlertCircle } from "lucide-react";
+import { ExternalLink, Clock, AlertCircle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useLessonLayout } from "./LessonLayoutContext";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
 import { useState, useEffect } from "react";
+import { markLessonCompleted } from "@/features/course/api/course.api";
+import { Button } from "@/components/ui/button";
 
 import { VideoPlayer } from "./VideoPlayer";
 
@@ -20,10 +22,28 @@ export function LessonContent({ lessonData }: LessonContentProps) {
   const [playbackData, setPlaybackData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isMarking, setIsMarking] = useState(false);
 
   useEffect(() => {
+    const fetchProgress = async () => {
+      if (!lessonData?.id) return;
+      try {
+        const res = await api.get(`/student/lessons/${lessonData.id}/progress`);
+        if (res.data.data?.isCompleted) {
+          setIsCompleted(true);
+        }
+      } catch (error) {
+        console.error("Failed to fetch lesson progress:", error);
+      }
+    };
+
     const fetchPlayback = async () => {
       if (!lessonData?.id) return;
+      if (lessonData?.type !== "VIDEO" && lessonData?.type !== "LIVE") {
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
       setErrorMsg("");
       try {
@@ -45,8 +65,23 @@ export function LessonContent({ lessonData }: LessonContentProps) {
         setIsLoading(false);
       }
     };
+
+    fetchProgress();
     fetchPlayback();
-  }, [lessonData?.id]);
+  }, [lessonData?.id, lessonData?.type]);
+
+  const handleMarkCompleted = async () => {
+    if (!lessonData?.id || isCompleted) return;
+    try {
+      setIsMarking(true);
+      await markLessonCompleted(lessonData.id);
+      setIsCompleted(true);
+    } catch (error) {
+      console.error("Failed to mark lesson completed:", error);
+    } finally {
+      setIsMarking(false);
+    }
+  };
 
   const lessonTitle = lessonData?.title || "Bài giảng";
   const assessments = lessonData?.assessments || [];
@@ -74,18 +109,22 @@ export function LessonContent({ lessonData }: LessonContentProps) {
     )}>
         {/* Header Title & Views */}
         {!isFullscreen && (
-          <div className="flex flex-wrap gap-3 justify-between items-start md:items-center p-6 pb-4">
-          <h1 className="text-lg md:text-xl font-bold text-[var(--surface-strong)] leading-tight">
-            {lessonTitle}
-          </h1>
-          <div className="flex items-center gap-1.5 text-xs font-medium text-surface-strong bg-surface-strong/10 px-2.5 py-1 rounded-full flex-shrink-0">
-            <Clock className="size-3.5" />
-            Còn {remainingViews}/{maxViews} lượt xem
+          <div className="flex flex-wrap gap-4 justify-between items-center p-6 pb-4 border-b border-[var(--border-default)]">
+            <h1 className="text-lg md:text-xl font-bold text-[var(--surface-strong)] leading-tight">
+              {lessonTitle}
+            </h1>
+            
+            {(lessonData?.type === "VIDEO" || lessonData?.type === "LIVE") && (
+              <div className="flex items-center gap-1.5 text-sm font-medium text-surface-strong bg-surface-strong/10 px-3 py-1.5 rounded-full flex-shrink-0">
+                <Clock className="size-4" />
+                Còn {remainingViews}/{maxViews} lượt xem
+              </div>
+            )}
           </div>
-        </div>
         )}
 
-        {/* Video Player */}
+        {/* Video Player (Chỉ hiển thị nếu là bài giảng Video hoặc có errorMsg) */}
+        {(lessonData?.type === "VIDEO" || lessonData?.type === "LIVE" || playbackData || errorMsg) && (
         <div className={cn("w-full bg-black flex-shrink-0 flex items-center justify-center relative", isFullscreen ? "h-screen" : "aspect-[16/9]")}>
           {isLoading ? (
             <div className="text-white flex flex-col items-center gap-3">
@@ -103,6 +142,7 @@ export function LessonContent({ lessonData }: LessonContentProps) {
             </div>
           ) : null}
         </div>
+        )}
 
         {/* Đề thi & Tài liệu */}
         {!isFullscreen && (assessments.length > 0 || resources.length > 0) && (
@@ -143,6 +183,31 @@ export function LessonContent({ lessonData }: LessonContentProps) {
         </div>
         )}
 
+        {/* Nút Đánh dấu hoàn thành */}
+        {!isFullscreen && !isLoading && (
+          <div className="p-6 flex justify-end border-t border-[var(--border-default)] bg-[var(--surface-subtle)]/30">
+            <Button 
+              onClick={handleMarkCompleted} 
+              disabled={isCompleted || isMarking}
+              variant={isCompleted ? "secondary" : "default"}
+              className={cn(
+                "transition-all",
+                isCompleted ? "bg-green-100 text-green-700 hover:bg-green-200 border-none opacity-100" : "bg-[#008ca5] hover:bg-[#007b91] text-white"
+              )}
+            >
+              {isCompleted ? (
+                <>
+                  <CheckCircle2 className="size-4 mr-1.5" />
+                  Đã hoàn thành
+                </>
+              ) : isMarking ? (
+                "Đang xử lý..."
+              ) : (
+                "Đánh dấu hoàn thành"
+              )}
+            </Button>
+          </div>
+        )}
     </div>
   );
 }

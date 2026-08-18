@@ -16,6 +16,9 @@ type Service interface {
 	GetLessonByID(lessonID string) (*Lesson, error)
 	GetLessonPlayback(userID string, lessonID string) (map[string]interface{}, error)
 	CheckEnrollmentStatus(userID string, courseSlug string) (bool, error)
+	GetEnrolledCourses(userID string) ([]CourseWithProgressDTO, error)
+	MarkLessonAsCompleted(userID, lessonID string) error
+	GetLessonProgress(userID, lessonID string) (*UserLessonProgress, error)
 }
 
 type service struct {
@@ -99,6 +102,7 @@ func (s *service) GetLessonPlayback(userID string, lessonID string) (map[string]
 		"playbackUrl":     playbackUrl,
 		"maxViews":        maxViews,
 		"usedViews":       progress.UsedViews,
+		"isCompleted":     progress.IsCompleted,
 	}, nil
 }
 
@@ -116,4 +120,16 @@ func (s *service) CheckEnrollmentStatus(userID string, courseSlug string) (bool,
 	}
 
 	return enrolled, nil
+}
+
+func (s *service) GetEnrolledCourses(userID string) ([]CourseWithProgressDTO, error) {
+	return s.repo.GetEnrolledCoursesWithProgress(userID)
+}
+
+func (s *service) MarkLessonAsCompleted(userID, lessonID string) error {
+	return s.repo.MarkLessonAsCompleted(userID, lessonID)
+}
+
+func (s *service) GetLessonProgress(userID, lessonID string) (*UserLessonProgress, error) {
+	return s.repo.GetLessonProgress(userID, lessonID)
 }
