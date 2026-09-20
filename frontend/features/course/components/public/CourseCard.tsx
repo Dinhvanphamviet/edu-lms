@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Video, Radio, List, Globe, LayoutList, Layers, FileText, Loader2 } from "lucide-react";
+import { Video, Radio, List, Globe, LayoutList, Layers, FileText, Loader2, ShoppingCart } from "lucide-react";
+import { useCart } from "@/hooks/useCart";
+import { toast } from "sonner";
 import { format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
@@ -152,20 +154,48 @@ export function CourseCard({ course, enrolledInfo }: { course: CourseData; enrol
                         Xem chi tiết
                       </Link>
                     </Button>
-                    <RegisterModal>
-                      <Button className="flex-1 h-12 rounded-full bg-surface-accent hover:bg-surface-accent-hover text-white font-bold text-sm shadow-sm">
-                        Đăng kí ngay
-                      </Button>
-                    </RegisterModal>
+                    <Button
+                      className="flex-1 h-12 rounded-full bg-surface-accent hover:bg-surface-accent-hover text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2"
+                      onClick={() => {
+                        const { addItem } = useCart.getState();
+                        const added = addItem({
+                          id: course.id,
+                          title: course.title,
+                          slug: course.slug || course.id,
+                          price: course.price,
+                          cover_image: course.cover_image,
+                        });
+                        if (added) toast.success("Đã thêm vào giỏ hàng");
+                        else toast.info("Khóa học đã có trong giỏ hàng");
+                      }}
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      Thêm vào giỏ hàng
+                    </Button>
                   </div>
                 </div>
               </DialogContent>
             </Dialog>
-            <RegisterModal>
-              <button className="flex-1 py-2 px-1 bg-amber-500 border-2 border-transparent text-white font-medium text-[13px] md:text-sm rounded-lg hover:bg-amber-500/90 transition-colors shadow-sm whitespace-nowrap pointer-events-auto">
-                Đăng kí
-              </button>
-            </RegisterModal>
+            <button
+              className="flex-1 py-2 px-1 bg-amber-500 border-2 border-transparent text-white font-medium text-[13px] md:text-sm rounded-lg hover:bg-amber-500/90 transition-colors shadow-sm whitespace-nowrap pointer-events-auto flex items-center justify-center gap-1.5"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const { addItem } = useCart.getState();
+                const added = addItem({
+                  id: course.id,
+                  title: course.title,
+                  slug: course.slug || course.id,
+                  price: course.price,
+                  cover_image: course.cover_image,
+                });
+                if (added) toast.success("Đã thêm vào giỏ hàng");
+                else toast.info("Khóa học đã có trong giỏ hàng");
+              }}
+            >
+              <ShoppingCart className="size-3.5" />
+              Thêm giỏ hàng
+            </button>
           </div>
         )}
       </div>

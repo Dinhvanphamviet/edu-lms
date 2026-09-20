@@ -18,6 +18,7 @@ export interface Course {
   price: number;
   cover_image: string;
   tags: string[];
+  slug?: string;
   description?: string;
 }
 

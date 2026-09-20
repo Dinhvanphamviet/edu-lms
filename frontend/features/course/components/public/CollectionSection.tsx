@@ -1,4 +1,8 @@
-import { ArrowRight } from "lucide-react";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useCart } from "@/hooks/useCart";
 import { CourseCard } from "./CourseCard";
 import { type CourseCollection, type Course } from "@/features/home/api/home.api";
 
@@ -7,8 +11,35 @@ interface CollectionSectionProps {
 }
 
 export function CollectionSection({ collection }: CollectionSectionProps) {
+  const router = useRouter();
   const formattedOriginalPrice = new Intl.NumberFormat('vi-VN').format(collection.original_price) + ' VNĐ';
   const formattedSalePrice = new Intl.NumberFormat('vi-VN').format(collection.sale_price) + ' VNĐ';
+
+  const handleBuyNow = () => {
+    const { addItem } = useCart.getState();
+    const coverImage =
+      collection.courses?.[0]?.cover_image ||
+      "https://res.cloudinary.com/dfbsdiq9p/image/upload/v1783848428/ChatGPT_Image_Jul_12_2026_04_26_58_PM_p8tus2.png";
+    const courseCount = collection.courses?.length || 0;
+    const comboTitle = `[Combo] ${collection.short_title || collection.title}${
+      courseCount > 0 ? ` (${courseCount} khóa học)` : ""
+    }`;
+
+    const added = addItem({
+      id: `collection-${collection.id}`,
+      title: comboTitle,
+      slug: collection.courses?.[0]?.slug || "courses",
+      price: collection.sale_price,
+      cover_image: coverImage,
+    });
+
+    if (added) {
+      toast.success(`Đã thêm combo ${collection.short_title || collection.title} vào giỏ hàng`);
+    } else {
+      toast.info(`Combo ${collection.short_title || collection.title} đã có trong giỏ hàng`);
+    }
+    router.push(`/cart?selected=collection-${collection.id}`);
+  };
 
   return (
     <section id={collection.id} className="w-full flex flex-col gap-8 scroll-mt-20">
@@ -19,7 +50,11 @@ export function CollectionSection({ collection }: CollectionSectionProps) {
         </h2>
 
         {/* Buy Button Container */}
-        <button className="relative flex items-center bg-[var(--surface-strong)] rounded-full p-1 shadow-md hover:bg-[var(--surface-strong)]/90 transition-colors group">
+        <button
+          onClick={handleBuyNow}
+          className="relative flex items-center bg-[var(--surface-strong)] rounded-full p-1 shadow-md hover:bg-[var(--surface-strong)]/90 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer group"
+          title={`Mua ngay trọn gói ${collection.short_title || collection.title}`}
+        >
           {/* Left Pill (Short Title) */}
           <div className="bg-white rounded-full px-5 py-2 shadow-sm border border-[var(--surface-strong)]/10 z-10">
             <span className="text-[var(--surface-strong)] text-base md:text-lg font-extrabold tracking-tight">

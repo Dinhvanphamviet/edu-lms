@@ -3,15 +3,17 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
-import { LayoutList, Layers, Star, FileText } from "lucide-react";
-import { RegisterModal } from "./RegisterModal";
+import { LayoutList, Layers, Star, FileText, ShoppingCart } from "lucide-react";
 import { ActivateCourseModal } from "./ActivateCourseModal";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/hooks/useCart";
+import { toast } from "sonner";
 import api from "@/lib/api";
 
 interface CourseDetailSidebarProps {
   course: {
+    id?: string;
     slug: string;
     title: string;
     price: number;
@@ -29,24 +31,33 @@ export function CourseDetailSidebar({ course }: CourseDetailSidebarProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const { isAuthenticated, user } = useAuth();
   
   const isEnrolled = isAuthenticated && user?.enrolled_courses?.includes(course.slug);
 
+  const handleAddToCart = () => {
+    const { addItem } = useCart.getState();
+    const added = addItem({
+      id: course.id || course.slug,
+      title: course.title,
+      slug: course.slug,
+      price: course.price,
+      cover_image: course.cover_image,
+    });
+
+    if (added) {
+      toast.success("Đã thêm vào giỏ hàng");
+    } else {
+      toast.info("Khóa học đã có trong giỏ hàng");
+    }
+    router.push(`/cart?selected=${encodeURIComponent(course.id || course.slug)}`);
+  };
+
   useEffect(() => {
     if (searchParams.get("action") === "enroll") {
-      setIsRegisterOpen(true);
+      handleAddToCart();
     }
   }, [searchParams]);
-
-  const handleRegisterOpenChange = (open: boolean) => {
-    setIsRegisterOpen(open);
-    if (!open && searchParams.get("action") === "enroll") {
-      // Remove action=enroll from URL when closing the modal
-      router.replace(pathname, { scroll: false });
-    }
-  };
 
   return (
     <div className="sticky top-[100px] flex flex-col gap-4">
@@ -101,11 +112,13 @@ export function CourseDetailSidebar({ course }: CourseDetailSidebarProps) {
               </Button>
             ) : (
               <>
-                <RegisterModal open={isRegisterOpen} onOpenChange={handleRegisterOpenChange}>
-                  <Button className="w-full h-12 bg-surface-strong hover:bg-cyan-700 text-white rounded-full font-bold text-base shadow-md uppercase">
-                    Đăng kí khóa học
-                  </Button>
-                </RegisterModal>
+                <Button 
+                  onClick={handleAddToCart}
+                  className="w-full h-12 bg-surface-strong hover:bg-cyan-700 text-white rounded-full font-bold text-base shadow-md uppercase flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99]"
+                >
+                  <ShoppingCart className="size-5" />
+                  Thêm vào giỏ hàng
+                </Button>
                 <ActivateCourseModal>
                   <Button variant="outline" className="w-full h-12 border-surface-strong text-surface-strong hover:bg-surface-strong/5 rounded-full font-bold text-base">
                     Kích hoạt khóa học

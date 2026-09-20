@@ -2,8 +2,9 @@ import React from "react";
 import Link from "next/link";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { LayoutList, Layers, FileText } from "lucide-react";
-import { RegisterModal } from "./RegisterModal";
+import { LayoutList, Layers, FileText, ShoppingCart } from "lucide-react";
+import { useCart } from "@/hooks/useCart";
+import { toast } from "sonner";
 import { CourseData } from "./CourseCard";
 
 interface QuickViewModalProps {
@@ -77,11 +78,24 @@ export function QuickViewModal({ course, children }: QuickViewModalProps) {
                 Xem chi tiết
               </Link>
             </Button>
-            <RegisterModal>
-              <Button className="flex-1 h-12 rounded-full bg-surface-accent hover:bg-surface-accent-hover text-white font-bold text-sm shadow-sm">
-                Đăng kí ngay
-              </Button>
-            </RegisterModal>
+            <Button
+              className="flex-1 h-12 rounded-full bg-surface-accent hover:bg-surface-accent-hover text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2"
+              onClick={() => {
+                const { addItem } = useCart.getState();
+                const added = addItem({
+                  id: course.id,
+                  title: course.title,
+                  slug: course.slug || course.id,
+                  price: course.price,
+                  cover_image: course.cover_image,
+                });
+                if (added) toast.success("Đã thêm vào giỏ hàng");
+                else toast.info("Khóa học đã có trong giỏ hàng");
+              }}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Thêm vào giỏ hàng
+            </Button>
           </div>
         </div>
       </DialogContent>

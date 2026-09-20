@@ -15,19 +15,19 @@ export function PublicLayoutWrapper({
 }) {
   const pathname = usePathname();
   
-  // Kiểm tra xem có phải là trang chi tiết khóa học không (ví dụ: /courses/step-1-2027)
-  const isCourseDetailPage = pathname.startsWith("/courses/") && pathname.length > "/courses/".length;
+  // Các trang full-width không có sidebar
+  const isFullWidthPage = (pathname.startsWith("/courses/") && pathname.length > "/courses/".length) || pathname.startsWith("/cart");
 
   return (
     <div className="flex min-h-screen w-full bg-cyan-50">
-      {!isCourseDetailPage && <Sidebar collections={collections} categories={categories} />}
+      {!isFullWidthPage && <Sidebar collections={collections} categories={categories} />}
       <div 
         className={`flex-1 flex flex-col min-h-screen relative transition-all duration-300 ${
-          !isCourseDetailPage ? "md:ml-[280px] lg:ml-[320px] xl:ml-[360px] 2xl:ml-[400px]" : "w-full"
+          !isFullWidthPage ? "md:ml-[280px] lg:ml-[320px] xl:ml-[360px] 2xl:ml-[400px]" : "w-full"
         }`}
       >
         <Header />
-        <main className={`flex-1 overflow-x-hidden ${!isCourseDetailPage ? 'p-6 md:p-8' : ''}`}>
+        <main className={`flex-1 overflow-x-hidden ${!isFullWidthPage ? 'p-6 md:p-8' : ''}`}>
           {children}
         </main>
       </div>
