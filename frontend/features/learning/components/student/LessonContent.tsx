@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLessonLayout } from "./LessonLayoutContext";
 import { cn } from "@/lib/utils";
 import api from "@/lib/api";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { markLessonCompleted } from "@/features/course/api/course.api";
 import { Button } from "@/components/ui/button";
 
@@ -26,19 +26,20 @@ export function LessonContent({ lessonData }: LessonContentProps) {
   const [isMarking, setIsMarking] = useState(false);
 
   useEffect(() => {
+    let active = true;
     const fetchProgress = async () => {
       if (!lessonData?.id) return;
       try {
         const res = await api.get(`/student/lessons/${lessonData.id}/progress`);
-        if (res.data.data?.isCompleted) {
-          setIsCompleted(true);
-        }
+        if (active) setIsCompleted(Boolean(res.data.data?.isCompleted));
       } catch (error) {
         console.error("Failed to fetch lesson progress:", error);
       }
     };
 
     const fetchPlayback = async () => {
+      setPlaybackData(null);
+      setIsCompleted(false);
       if (!lessonData?.id) return;
       if (lessonData?.type !== "VIDEO" && lessonData?.type !== "LIVE") {
         setIsLoading(false);
@@ -48,8 +49,10 @@ export function LessonContent({ lessonData }: LessonContentProps) {
       setErrorMsg("");
       try {
         const res = await api.get(`/student/lessons/${lessonData.id}/playback`);
+        if (!active) return;
         setPlaybackData(res.data.data);
       } catch (error: any) {
+        if (!active) return;
         if (error.response?.status === 401) {
           setErrorMsg("Vui lòng đăng nhập để xem bài giảng.");
         } else if (error.response?.status === 403) {
@@ -62,12 +65,13 @@ export function LessonContent({ lessonData }: LessonContentProps) {
           setErrorMsg("Không thể tải video. Vui lòng thử lại sau.");
         }
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     };
 
     fetchProgress();
     fetchPlayback();
+    return () => { active = false; };
   }, [lessonData?.id, lessonData?.type]);
 
   const handleMarkCompleted = async () => {
@@ -87,16 +91,16 @@ export function LessonContent({ lessonData }: LessonContentProps) {
   const assessments = lessonData?.assessments || [];
   const resources = lessonData?.resources || [];
 
-  const videoJsOptions = {
+  const videoJsOptions = useMemo(() => ({
     autoplay: false,
     controls: true,
     responsive: true,
     fluid: true,
-    sources: playbackData ? [{
+    sources: playbackData?.playbackUrl ? [{
       src: playbackData.playbackUrl,
-      type: 'application/x-mpegURL'
+      type: playbackData.contentType || 'application/x-mpegURL'
     }] : []
-  };
+  }), [playbackData]);
 
   const maxViews = playbackData?.maxViews || 21;
   const usedViews = playbackData?.usedViews || 0;
