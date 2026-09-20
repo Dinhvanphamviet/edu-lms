@@ -123,8 +123,9 @@ func (Lesson) TableName() string { return "lessons" }
 type Video struct {
 	ID              uuid.UUID  `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
 	LessonID        uuid.UUID  `gorm:"type:uuid;unique;not null" json:"lesson_id"`
-	Provider        string     `gorm:"type:varchar(30);not null;default:'BUNNY_STREAM'" json:"provider"`
+	Provider        string     `gorm:"type:varchar(30);not null;default:'R2'" json:"provider"`
 	ProviderVideoID uuid.UUID  `gorm:"type:uuid;unique;not null" json:"provider_video_id"`
+	ObjectKey       *string    `gorm:"type:text" json:"object_key,omitempty"`
 	Title           string     `gorm:"type:varchar(255);not null" json:"title"`
 	Status          string     `gorm:"type:varchar(30);not null;default:'UPLOADING'" json:"status"`
 	DurationSeconds *int       `gorm:"type:int" json:"duration_seconds"`

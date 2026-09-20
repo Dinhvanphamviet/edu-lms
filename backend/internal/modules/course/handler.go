@@ -29,7 +29,7 @@ func (h *Handler) GetCategories(c *gin.Context) {
 
 func (h *Handler) GetCourses(c *gin.Context) {
 	categorySlug := c.Query("category")
-	
+
 	courses, err := h.service.GetCourses(categorySlug)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch courses"})
@@ -100,6 +100,10 @@ func (h *Handler) GetLessonPlayback(c *gin.Context) {
 				"error": "Bạn đã hết lượt xem cho bài giảng này",
 				"data":  playbackInfo,
 			})
+			return
+		}
+		if err.Error() == "ENROLLMENT_REQUIRED" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Bạn chưa có quyền học hoặc khóa học đã hết hạn."})
 			return
 		}
 		c.JSON(http.StatusNotFound, gin.H{"error": "Playback information not found"})

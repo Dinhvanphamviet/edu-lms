@@ -15,6 +15,7 @@ type Repository interface {
 	GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapterDTO, error)
 	GetLessonByID(lessonID string) (*Lesson, error)
 	GetVideoByLessonID(lessonID string) (*Video, error)
+	CanPlayLesson(userID, lessonID string) (bool, error)
 	AutoMigrateAndSeed() error
 	FindUserLessonProgress(userID, lessonID string) (*UserLessonProgress, error)
 	IncrementLessonViews(userID, lessonID string) (*UserLessonProgress, error)
@@ -126,9 +127,32 @@ func (r *repository) GetLessonByID(lessonID string) (*Lesson, error) {
 }
 
 func (r *repository) AutoMigrateAndSeed() error {
+	// Only change the default for future rows; existing Bunny providers stay intact.
+	if r.db.Migrator().HasTable(&Video{}) {
+		if err := r.db.Exec("ALTER TABLE videos ALTER COLUMN provider SET DEFAULT 'R2'").Error; err != nil {
+			return err
+		}
+	}
+	// Add R2 metadata separately: existing enum migration failures must not hide this change.
+	if r.db.Migrator().HasTable(&Video{}) && !r.db.Migrator().HasColumn(&Video{}, "ObjectKey") {
+		if err := r.db.Migrator().AddColumn(&Video{}, "ObjectKey"); err != nil {
+			return err
+		}
+	}
 	// Ignore errors due to Postgres ENUM casting issues with GORM
 	r.db.AutoMigrate(&CourseCategory{}, &CourseCategoryRelation{}, &Chapter{}, &Lesson{}, &Video{}, &Assessment{}, &LessonResource{}, &UserLessonProgress{})
 	return nil
+}
+
+func (r *repository) CanPlayLesson(userID, lessonID string) (bool, error) {
+	var count int64
+	err := r.db.Table("enrollments e").
+		Joins("JOIN chapters ch ON ch.course_id = e.course_id AND ch.deleted_at IS NULL").
+		Joins("JOIN lessons l ON l.chapter_id = ch.id AND l.deleted_at IS NULL").
+		Where("e.user_id = ? AND l.id = ? AND e.status = ? AND l.status = ?", userID, lessonID, "ACTIVE", "PUBLISHED").
+		Where("(e.start_date IS NULL OR e.start_date <= NOW()) AND (e.end_date IS NULL OR e.end_date > NOW())").
+		Count(&count).Error
+	return count > 0, err
 }
 
 func (r *repository) FindUserLessonProgress(userID, lessonID string) (*UserLessonProgress, error) {
@@ -144,7 +168,7 @@ func (r *repository) IncrementLessonViews(userID, lessonID string) (*UserLessonP
 	// Using FirstOrCreate
 	userUID, _ := uuid.Parse(userID)
 	lessonUID, _ := uuid.Parse(lessonID)
-	
+
 	err := r.db.Where(UserLessonProgress{UserID: userUID, LessonID: lessonUID}).
 		Assign(UserLessonProgress{}).
 		FirstOrCreate(&progress).Error
@@ -219,7 +243,7 @@ func (r *repository) GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapte
 	for _, row := range rows {
 		lessonCount := 1
 		examCount := row.ExamCount
-		
+
 		// If the lesson itself is a quiz, we shouldn't count it as a video lecture
 		if row.Type == string(LessonTypeQuiz) {
 			lessonCount = 0
@@ -285,7 +309,7 @@ func (r *repository) GetEnrolledCoursesWithProgress(userID string) ([]CourseWith
 	}
 
 	var results []CourseWithProgressDTO
-	
+
 	courseIDs := make([]uuid.UUID, len(courses))
 	for i, c := range courses {
 		courseIDs[i] = c.ID
@@ -298,7 +322,7 @@ func (r *repository) GetEnrolledCoursesWithProgress(userID string) ([]CourseWith
 		Exams            int       `gorm:"column:exams"`
 		Documents        int       `gorm:"column:documents"`
 	}
-	
+
 	var statsRows []courseStatsRow
 	err = r.db.Raw(`
 		SELECT 
@@ -370,12 +394,12 @@ func (r *repository) GetEnrolledCoursesWithProgress(userID string) ([]CourseWith
 func (r *repository) MarkLessonAsCompleted(userID, lessonID string) error {
 	userUID, _ := uuid.Parse(userID)
 	lessonUID, _ := uuid.Parse(lessonID)
-	
+
 	var progress UserLessonProgress
 	err := r.db.Where(UserLessonProgress{UserID: userUID, LessonID: lessonUID}).
 		Assign(UserLessonProgress{IsCompleted: true}).
 		FirstOrCreate(&progress).Error
-	
+
 	if err != nil {
 		return err
 	}
@@ -391,7 +415,7 @@ func (r *repository) MarkLessonAsCompleted(userID, lessonID string) error {
 func (r *repository) GetLessonProgress(userID, lessonID string) (*UserLessonProgress, error) {
 	userUID, _ := uuid.Parse(userID)
 	lessonUID, _ := uuid.Parse(lessonID)
-	
+
 	var progress UserLessonProgress
 	err := r.db.Where("user_id = ? AND lesson_id = ?", userUID, lessonUID).First(&progress).Error
 	if err != nil {
