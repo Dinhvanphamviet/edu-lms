@@ -3,17 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HEADER_MENUS } from "@/constants/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { ThemeToggle } from "@/components/ui/themeToggle";
 import { cn } from "@/lib/utils";
 import { HeaderAuthControls } from "./HeaderAuthControls";
+import { CartDropdown } from "./CartDropdown";
 
 export function Header() {
   const pathname = usePathname();
 
-  const showLogo = pathname.startsWith("/courses/") && pathname.length > "/courses/".length || pathname.startsWith("/my-courses");
+  const showLogo = pathname.startsWith("/courses/") && pathname.length > "/courses/".length || pathname.startsWith("/my-courses") || pathname.startsWith("/cart");
 
   return (
     <header className="h-20 border-b border-[var(--border-default)] bg-cyan-50 sticky top-0 z-50 px-6 flex items-center justify-between">
@@ -66,7 +64,7 @@ export function Header() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-1.5 md:gap-3">
-        <ThemeToggle />
+        <CartDropdown />
         <HeaderAuthControls />
       </div>
     </header>

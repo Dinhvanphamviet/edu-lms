@@ -1,4 +1,4 @@
-import { Home, BookOpen, User, Star, GraduationCap, Calendar, Book, Search } from "lucide-react";
+import { Home, BookOpen, User, Star, GraduationCap, Calendar, Book } from "lucide-react";
 
 export const SIDEBAR_MENUS = [
   { id: 1, title: "Trang chủ", url: "/", icon: Home },
@@ -12,9 +12,8 @@ export const SIDEBAR_MENUS = [
 
 export const HEADER_MENUS = [
   { id: 1, title: "Khóa học", url: "/courses", icon: GraduationCap },
-  { id: 2, title: "Lịch đào tạo", url: "/schedule", icon: Calendar },
+  { id: 2, title: "Thi thử", url: "/thi-thu", icon: Calendar },
   { id: 3, title: "Tài liệu", url: "/materials", icon: Book },
-  { id: 4, title: "Tra cứu học bạ", url: "/transcript", icon: Search },
 ];
 
 export const SOCIAL_LINKS = [
