@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Danh sách các route yêu cầu đăng nhập
-const protectedRoutes = ["/profile", "/my-courses", "/dashboard", "/checkout"];
+const protectedRoutes = ["/profile", "/my-courses", "/dashboard", "/checkout", "/teacher", "/admin"];
 
 // Danh sách các route dành cho khách (chưa đăng nhập)
 const authRoutes = ["/login", "/register", "/forgot-password"];

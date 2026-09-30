@@ -145,6 +145,15 @@ func (r *repository) AutoMigrateAndSeed() error {
 }
 
 func (r *repository) CanPlayLesson(userID, lessonID string) (bool, error) {
+	// 1. Nếu bài học cho phép học thử miễn phí (is_free = true), cho phép xem ngay
+	var lesson Lesson
+	if err := r.db.Select("is_free, status").Where("id = ?", lessonID).First(&lesson).Error; err == nil {
+		if lesson.IsFree != nil && *lesson.IsFree && lesson.Status == LessonStatusPublished {
+			return true, nil
+		}
+	}
+
+	// 2. Nếu không phải bài học thử, kiểm tra quyền đăng ký của học sinh
 	var count int64
 	err := r.db.Table("enrollments e").
 		Joins("JOIN chapters ch ON ch.course_id = e.course_id AND ch.deleted_at IS NULL").
@@ -213,6 +222,8 @@ func (r *repository) GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapte
 		LessonID  uuid.UUID
 		Title     string
 		Type      string
+		Status    string
+		IsFree    bool
 		ExamCount int
 		DocCount  int
 	}
@@ -223,6 +234,8 @@ func (r *repository) GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapte
 			l.id as lesson_id, 
 			l.title, 
 			l.type, 
+			l.status,
+			COALESCE(l.is_free, false) as is_free,
 			COALESCE(a.exam_count, 0) as exam_count, 
 			COALESCE(r.doc_count, 0) as doc_count
 		FROM lessons l
@@ -252,9 +265,11 @@ func (r *repository) GetCourseCurriculum(courseID uuid.UUID) ([]CurriculumChapte
 
 		themes := lessonMap[row.ChapterID]
 		themes = append(themes, CurriculumThemeDTO{
-			ID:    row.LessonID.String(),
-			Title: row.Title,
-			Stats: fmt.Sprintf("%d Bài giảng / %d Bài tập / %d Tài liệu", lessonCount, examCount, row.DocCount),
+			ID:     row.LessonID.String(),
+			Title:  row.Title,
+			Stats:  fmt.Sprintf("%d Bài giảng / %d Bài tập / %d Tài liệu", lessonCount, examCount, row.DocCount),
+			IsFree: row.IsFree,
+			Status: row.Status,
 		})
 		lessonMap[row.ChapterID] = themes
 

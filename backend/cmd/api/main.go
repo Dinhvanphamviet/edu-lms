@@ -9,6 +9,7 @@ import (
 	"edu-lms-backend/internal/modules/auth"
 	"edu-lms-backend/internal/modules/course"
 	"edu-lms-backend/internal/modules/home"
+	"edu-lms-backend/internal/modules/teacher"
 	"edu-lms-backend/internal/pkg/db"
 	"edu-lms-backend/internal/pkg/middleware"
 
@@ -42,6 +43,7 @@ func main() {
 	}
 	courseService := course.NewService(courseRepo)
 	courseHandler := course.NewHandler(courseService)
+
 
 	// 4. Setup Router
 	r := gin.Default()
@@ -77,6 +79,12 @@ func main() {
 		studentGroup := apiGroup.Group("/student")
 		studentGroup.Use(middleware.RequireAuth(cfg))
 		course.RegisterProtectedRoutes(studentGroup, courseHandler)
+
+		// Teacher Routes (Protected + Role)
+		teacherGroup := apiGroup.Group("/teacher")
+		teacherGroup.Use(middleware.RequireAuth(cfg))
+		teacherGroup.Use(middleware.RequireRole("TEACHER", "ADMIN"))
+		teacher.RegisterRoutes(teacherGroup, database)
 
 		// Example protected route
 		protected := apiGroup.Group("/protected")

@@ -87,6 +87,8 @@ export interface CurriculumTheme {
 	id: string;
 	title: string;
 	stats: string;
+	is_free?: boolean;
+	status?: "DRAFT" | "PUBLISHED" | "HIDDEN";
 }
 
 export interface CurriculumChapter {

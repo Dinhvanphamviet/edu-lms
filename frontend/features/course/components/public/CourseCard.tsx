@@ -1,17 +1,23 @@
 "use client";
 
 import React, { useState } from "react";
-import { Video, Radio, List, Globe, LayoutList, Layers, FileText, Loader2, ShoppingCart } from "lucide-react";
+import {
+  Video,
+  Radio,
+  List,
+  Globe,
+  LayoutList,
+  Layers,
+  FileText,
+  Loader2,
+  ShoppingCart,
+} from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { RegisterModal } from "./RegisterModal";
 import { getCourseBySlug } from "../../api/course.api";
@@ -37,12 +43,19 @@ export interface EnrolledInfo {
   totalLessons: number;
 }
 
-export function CourseCard({ course, enrolledInfo }: { course: CourseData; enrolledInfo?: EnrolledInfo }) {
+export function CourseCard({
+  course,
+  enrolledInfo,
+}: {
+  course: CourseData;
+  enrolledInfo?: EnrolledInfo;
+}) {
   // Format price to VND
-  const formattedPrice = new Intl.NumberFormat('vi-VN').format(course.price) + ' VNĐ';
+  const formattedPrice =
+    new Intl.NumberFormat("vi-VN").format(course.price) + " VNĐ";
   const courseUrl = `/courses/${course.slug}`;
 
-  let formattedDate = course.release_date;
+  let formattedDate = "Mới phát hành";
   try {
     if (course.release_date) {
       formattedDate = format(new Date(course.release_date), "dd/MM/yyyy");
@@ -70,13 +83,24 @@ export function CourseCard({ course, enrolledInfo }: { course: CourseData; enrol
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-[var(--border-default)] hover:shadow-md transition-shadow flex flex-col h-full group relative">
-      <Link href={courseUrl} className="absolute inset-0 z-0" aria-label={`Xem chi tiết khóa học ${course.title}`} />
+      <Link
+        href={courseUrl}
+        className="absolute inset-0 z-0"
+        aria-label={`Xem chi tiết khóa học ${course.title}`}
+      />
 
       {/* Cover Image */}
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-slate-100 rounded-t-2xl pointer-events-none">
         <img
-          src={course.cover_image}
+          src={
+            course.cover_image ||
+            "https://images.unsplash.com/photo-1633613286991-611fe299c4be?q=80&w=600&auto=format&fit=crop"
+          }
           alt={course.title}
+          onError={(e) => {
+            (e.target as HTMLImageElement).src =
+              "https://images.unsplash.com/photo-1633613286991-611fe299c4be?q=80&w=600&auto=format&fit=crop";
+          }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
 
@@ -93,7 +117,18 @@ export function CourseCard({ course, enrolledInfo }: { course: CourseData; enrol
                   <div className="flex flex-col sm:flex-row gap-6 mb-6">
                     {/* Thumbnail Image */}
                     <div className="w-full sm:w-[240px] shrink-0 rounded-xl overflow-hidden shadow-sm aspect-[4/3] bg-slate-100">
-                      <img src={course.cover_image} alt={course.title} className="w-full h-full object-cover" />
+                      <img
+                        src={
+                          course.cover_image ||
+                          "https://images.unsplash.com/photo-1633613286991-611fe299c4be?q=80&w=600&auto=format&fit=crop"
+                        }
+                        alt={course.title}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "https://images.unsplash.com/photo-1633613286991-611fe299c4be?q=80&w=600&auto=format&fit=crop";
+                        }}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
 
                     {/* Title and Stats */}
@@ -109,19 +144,28 @@ export function CourseCard({ course, enrolledInfo }: { course: CourseData; enrol
                         <div className="flex items-center gap-2 text-[var(--text-primary)]">
                           <LayoutList className="w-5 h-5 text-surface-strong" />
                           <span className="text-[14px]">
-                            <strong className="font-bold">{(detailCourse ?? course).stats?.lessons ?? 0}</strong> Bài giảng chất lượng cao
+                            <strong className="font-bold">
+                              {(detailCourse ?? course).stats?.lessons ?? 0}
+                            </strong>{" "}
+                            Bài giảng chất lượng cao
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-[var(--text-primary)]">
                           <Layers className="w-5 h-5 text-surface-strong" />
                           <span className="text-[14px]">
-                            <strong className="font-bold">{(detailCourse ?? course).stats?.exams ?? 0}</strong> Bài thi & Luyện tập
+                            <strong className="font-bold">
+                              {(detailCourse ?? course).stats?.exams ?? 0}
+                            </strong>{" "}
+                            Bài thi & Luyện tập
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-[var(--text-primary)]">
                           <FileText className="w-5 h-5 text-surface-strong" />
                           <span className="text-[14px]">
-                            <strong className="font-bold">{(detailCourse ?? course).stats?.documents ?? 0}</strong> Tài liệu & PDF đi kèm
+                            <strong className="font-bold">
+                              {(detailCourse ?? course).stats?.documents ?? 0}
+                            </strong>{" "}
+                            Tài liệu & PDF đi kèm
                           </span>
                         </div>
                       </div>
@@ -130,15 +174,20 @@ export function CourseCard({ course, enrolledInfo }: { course: CourseData; enrol
 
                   {/* Bottom Section: Description */}
                   <div className="border-t border-dashed border-gray-300 pt-5 mb-6">
-                    <h3 className="font-bold text-surface-strong mb-2 text-lg">Mô tả khoá học</h3>
+                    <h3 className="font-bold text-surface-strong mb-2 text-lg">
+                      Mô tả khoá học
+                    </h3>
                     {loadingDetails ? (
                       <div className="flex items-center gap-2 text-sm text-[var(--text-primary)]/60">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Đang tải thông tin...
+                        <Loader2 className="h-4 w-4 animate-spin" /> Đang tải
+                        thông tin...
                       </div>
                     ) : detailCourse?.description ? (
                       <div
                         className="text-[14px] text-[var(--text-primary)]/80 leading-relaxed prose prose-sm max-w-none"
-                        dangerouslySetInnerHTML={{ __html: detailCourse.description }}
+                        dangerouslySetInnerHTML={{
+                          __html: detailCourse.description,
+                        }}
                       />
                     ) : (
                       <p className="text-[14px] text-[var(--text-primary)]/80 leading-relaxed">
@@ -149,10 +198,12 @@ export function CourseCard({ course, enrolledInfo }: { course: CourseData; enrol
 
                   {/* Actions */}
                   <div className="flex items-center gap-4 mt-auto">
-                    <Button variant="outline" className="flex-1 h-12 rounded-full border-surface-accent text-surface-accent hover:bg-surface-accent/5 font-bold text-sm" asChild>
-                      <Link href={courseUrl}>
-                        Xem chi tiết
-                      </Link>
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-12 rounded-full border-surface-accent text-surface-accent hover:bg-surface-accent/5 font-bold text-sm"
+                      asChild
+                    >
+                      <Link href={courseUrl}>Xem chi tiết</Link>
                     </Button>
                     <Button
                       className="flex-1 h-12 rounded-full bg-surface-accent hover:bg-surface-accent-hover text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2"
@@ -209,7 +260,8 @@ export function CourseCard({ course, enrolledInfo }: { course: CourseData; enrol
 
           {enrolledInfo && (
             <div className="text-[13px] font-medium text-[var(--text-primary)]/70 mb-2">
-              Đã hoàn thành {enrolledInfo.completedLessons}/{enrolledInfo.totalLessons} bài
+              Đã hoàn thành {enrolledInfo.completedLessons}/
+              {enrolledInfo.totalLessons} bài
             </div>
           )}
 
@@ -228,9 +280,11 @@ export function CourseCard({ course, enrolledInfo }: { course: CourseData; enrol
               <span className="inline-block text-[11px] text-[var(--surface-strong)] font-semibold bg-teal-50 px-2.5 py-1 rounded-md">
                 Phát hành: {formattedDate}
               </span>
-            ) : <div />}
+            ) : (
+              <div />
+            )}
 
-            <div className="flex justify-end gap-1.5">
+            <div className="flex justify-end gap-1.5 flex-wrap">
               {course.tags?.includes("Video") && (
                 <span className="inline-flex items-center justify-center gap-1 text-[10px] font-bold px-2 py-1 bg-[var(--surface-strong)] text-white rounded-md uppercase">
                   <Video className="w-3 h-3" /> Video
@@ -241,18 +295,34 @@ export function CourseCard({ course, enrolledInfo }: { course: CourseData; enrol
                   <Radio className="w-3 h-3" /> Livestream
                 </span>
               )}
+              {(course.tags?.includes("Tài liệu") ||
+                course.tags?.includes("Tài liệu")) && (
+                <span className="inline-flex items-center justify-center gap-1 text-[10px] font-bold px-2 py-1 bg-blue-600 text-white rounded-md uppercase">
+                  <FileText className="w-3 h-3" /> Tài liệu
+                </span>
+              )}
             </div>
           </div>
 
           {enrolledInfo ? (
             <div className="w-full flex items-center gap-2">
               <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden flex-1">
-                <div 
+                <div
                   className="h-full bg-orange-400 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, (enrolledInfo.completedLessons / Math.max(1, enrolledInfo.totalLessons)) * 100)}%` }}
+                  style={{
+                    width: `${Math.min(100, (enrolledInfo.completedLessons / Math.max(1, enrolledInfo.totalLessons)) * 100)}%`,
+                  }}
                 />
               </div>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-orange-400 shrink-0">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5 text-orange-400 shrink-0"
+              >
                 <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
                 <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
                 <path d="M4 22h16"></path>

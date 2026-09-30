@@ -20,7 +20,6 @@ const (
 	CourseStatusDraft     CourseStatus = "DRAFT"
 	CourseStatusPublished CourseStatus = "PUBLISHED"
 	CourseStatusHidden    CourseStatus = "HIDDEN"
-	CourseStatusArchived  CourseStatus = "ARCHIVED"
 )
 
 type Course struct {
@@ -29,7 +28,6 @@ type Course struct {
 	Slug         string         `gorm:"type:varchar(255);unique;not null" json:"slug"`
 	Description  *string        `gorm:"type:text" json:"description"`
 	Price        float64        `gorm:"type:decimal(10,2);default:0" json:"price"`
-	DurationDays *int           `gorm:"type:int" json:"duration_days"`
 	Status       CourseStatus   `gorm:"type:varchar(30);not null;default:'DRAFT'" json:"status"`
 	CoverImage   *string        `gorm:"type:text" json:"cover_image"`
 	ReleaseDate  *time.Time     `gorm:"type:timestamp with time zone" json:"release_date"`
@@ -81,7 +79,6 @@ const (
 	LessonStatusDraft     LessonStatus = "DRAFT"
 	LessonStatusPublished LessonStatus = "PUBLISHED"
 	LessonStatusHidden    LessonStatus = "HIDDEN"
-	LessonStatusArchived  LessonStatus = "ARCHIVED"
 )
 
 type Chapter struct {
@@ -106,6 +103,7 @@ type Lesson struct {
 	Content    *string        `gorm:"type:text" json:"content"`
 	MaxViews   *int           `gorm:"type:int;default:21" json:"max_views"`
 	IsOptional *bool          `gorm:"type:boolean;default:false" json:"is_optional"`
+	IsFree     *bool          `gorm:"type:boolean;default:false" json:"is_free"`
 	Status     LessonStatus   `gorm:"type:varchar(30);not null;default:'DRAFT'" json:"status"`
 	CreatedAt  time.Time      `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt  time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
@@ -139,9 +137,11 @@ func (Video) TableName() string { return "videos" }
 // DTOs for frontend curriculum
 
 type CurriculumThemeDTO struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
-	Stats string `json:"stats"`
+	ID     string `json:"id"`
+	Title  string `json:"title"`
+	Stats  string `json:"stats"`
+	IsFree bool   `json:"is_free"`
+	Status string `json:"status"`
 }
 
 type CurriculumChapterDTO struct {
