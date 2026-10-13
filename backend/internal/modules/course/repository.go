@@ -2,6 +2,7 @@ package course
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -301,6 +302,7 @@ func (r *repository) CheckEnrollment(userID, courseID string) (bool, error) {
 	var count int64
 	err := r.db.Model(&Enrollment{}).
 		Where("user_id = ? AND course_id = ? AND status IN ?", userID, courseID, []string{"ACTIVE", "PENDING"}).
+		Where("(start_date IS NULL OR start_date <= NOW()) AND (end_date IS NULL OR end_date > NOW())").
 		Count(&count).Error
 	if err != nil {
 		return false, err
@@ -328,6 +330,14 @@ func (r *repository) GetEnrolledCoursesWithProgress(userID string) ([]CourseWith
 	courseIDs := make([]uuid.UUID, len(courses))
 	for i, c := range courses {
 		courseIDs[i] = c.ID
+	}
+	var enrollments []Enrollment
+	if err := r.db.Where("user_id = ? AND course_id IN ? AND status IN ?", userID, courseIDs, []string{"ACTIVE", "PENDING"}).Find(&enrollments).Error; err != nil {
+		return nil, err
+	}
+	enrollmentByCourse := make(map[uuid.UUID]Enrollment, len(enrollments))
+	for _, enrollment := range enrollments {
+		enrollmentByCourse[enrollment.CourseID] = enrollment
 	}
 
 	type courseStatsRow struct {
@@ -384,13 +394,16 @@ func (r *repository) GetEnrolledCoursesWithProgress(userID string) ([]CourseWith
 
 	for _, c := range courses {
 		stats := statsMap[c.ID]
+		enrollment := enrollmentByCourse[c.ID]
 		results = append(results, CourseWithProgressDTO{
-			ID:          c.ID.String(),
-			Title:       c.Title,
-			Slug:        c.Slug,
-			CoverImage:  c.CoverImage,
-			ReleaseDate: c.ReleaseDate,
-			Tags:        c.Tags,
+			AccessExpiresAt: enrollment.EndDate,
+			AccessExpired:   enrollment.EndDate != nil && !enrollment.EndDate.After(time.Now()),
+			ID:              c.ID.String(),
+			Title:           c.Title,
+			Slug:            c.Slug,
+			CoverImage:      c.CoverImage,
+			ReleaseDate:     c.ReleaseDate,
+			Tags:            c.Tags,
 			Stats: CourseStats{
 				Lessons:   stats.TotalLessons,
 				Exams:     stats.Exams,

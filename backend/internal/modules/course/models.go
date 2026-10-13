@@ -23,19 +23,19 @@ const (
 )
 
 type Course struct {
-	ID           uuid.UUID      `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
-	Title        string         `gorm:"type:varchar(255);not null" json:"title"`
-	Slug         string         `gorm:"type:varchar(255);unique;not null" json:"slug"`
-	Description  *string        `gorm:"type:text" json:"description"`
-	Price        float64        `gorm:"type:decimal(10,2);default:0" json:"price"`
-	Status       CourseStatus   `gorm:"type:varchar(30);not null;default:'DRAFT'" json:"status"`
-	CoverImage   *string        `gorm:"type:text" json:"cover_image"`
-	ReleaseDate  *time.Time     `gorm:"type:timestamp with time zone" json:"release_date"`
-	Tags         pq.StringArray `gorm:"type:text[]" json:"tags"`
-	Stats        CourseStats    `gorm:"-" json:"stats"`
-	CreatedAt    time.Time      `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt    time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
-	DeletedAt    gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID          uuid.UUID      `gorm:"primaryKey;type:uuid;default:gen_random_uuid()" json:"id"`
+	Title       string         `gorm:"type:varchar(255);not null" json:"title"`
+	Slug        string         `gorm:"type:varchar(255);unique;not null" json:"slug"`
+	Description *string        `gorm:"type:text" json:"description"`
+	Price       float64        `gorm:"type:decimal(10,2);default:0" json:"price"`
+	Status      CourseStatus   `gorm:"type:varchar(30);not null;default:'DRAFT'" json:"status"`
+	CoverImage  *string        `gorm:"type:text" json:"cover_image"`
+	ReleaseDate *time.Time     `gorm:"type:timestamp with time zone" json:"release_date"`
+	Tags        pq.StringArray `gorm:"type:text[]" json:"tags"`
+	Stats       CourseStats    `gorm:"-" json:"stats"`
+	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt   time.Time      `gorm:"autoUpdateTime" json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 }
 
 func (Course) TableName() string {
@@ -157,14 +157,16 @@ type CourseProgress struct {
 }
 
 type CourseWithProgressDTO struct {
-	ID          string         `json:"id"`
-	Title       string         `json:"title"`
-	Slug        string         `json:"slug"`
-	CoverImage  *string        `json:"cover_image"`
-	ReleaseDate *time.Time     `json:"release_date"`
-	Tags        pq.StringArray `json:"tags"`
-	Stats       CourseStats    `json:"stats"`
-	Progress    CourseProgress `json:"progress"`
+	AccessExpiresAt *time.Time     `json:"accessExpiresAt"`
+	AccessExpired   bool           `json:"accessExpired"`
+	ID              string         `json:"id"`
+	Title           string         `json:"title"`
+	Slug            string         `json:"slug"`
+	CoverImage      *string        `json:"cover_image"`
+	ReleaseDate     *time.Time     `json:"release_date"`
+	Tags            pq.StringArray `json:"tags"`
+	Stats           CourseStats    `json:"stats"`
+	Progress        CourseProgress `json:"progress"`
 }
 
 type Assessment struct {

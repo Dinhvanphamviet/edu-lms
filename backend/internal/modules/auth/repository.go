@@ -83,6 +83,7 @@ func (r *repository) GetEnrolledCourseSlugs(userID string) ([]string, error) {
 		Select("c.slug").
 		Joins("JOIN enrollments e ON c.id = e.course_id").
 		Where("e.user_id = ? AND e.status = ?", userID, "ACTIVE").
+		Where("(e.start_date IS NULL OR e.start_date <= NOW()) AND (e.end_date IS NULL OR e.end_date > NOW())").
 		Pluck("c.slug", &slugs).Error
 	return slugs, err
 }

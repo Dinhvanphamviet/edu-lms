@@ -21,6 +21,7 @@ interface AuthState {
   clearAuth: () => void;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 export const useAuth = create<AuthState>()(
@@ -52,6 +53,11 @@ export const useAuth = create<AuthState>()(
         }
       },
 
+      refreshUser: async () => {
+        const { data } = await api.get<User>("/protected/me");
+        set({ user: data });
+      },
+
       checkAuth: async () => {
         const { accessToken, isAuthenticated } = get();
 
@@ -75,8 +81,7 @@ export const useAuth = create<AuthState>()(
         try {
           // Verify current access token by getting profile
           const { data } = await api.get("/protected/me");
-          set({ isLoading: false });
-          // If we want to sync user data from /me, we can do it here
+          set({ user: data, isLoading: false });
         } catch (error) {
           // If it fails, axios interceptor will try to refresh. 
           // If refresh also fails, interceptor dispatches 'auth:logout'
@@ -95,6 +100,10 @@ export const useAuth = create<AuthState>()(
 
 // Listen to interceptor logout event
 if (typeof window !== "undefined") {
+  window.addEventListener("auth:token", (event) => {
+    const { user, access_token } = (event as CustomEvent<{ user: User; access_token: string }>).detail;
+    useAuth.getState().setAuth(user, access_token);
+  });
   window.addEventListener("auth:logout", () => {
     useAuth.getState().clearAuth();
   });

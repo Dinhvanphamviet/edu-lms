@@ -26,18 +26,6 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Interceptor to add access token to requests
-api.interceptors.request.use(
-  (config) => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
 // Interceptor to handle 401 and refresh token
 api.interceptors.response.use(
   (response) => response,
@@ -69,6 +57,7 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
       if (isRefreshing) {
+        originalRequest._retry = true;
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
         })
@@ -98,6 +87,9 @@ api.interceptors.response.use(
         // For axios retry:
         api.defaults.headers.common["Authorization"] = "Bearer " + newAccessToken;
         originalRequest.headers["Authorization"] = "Bearer " + newAccessToken;
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("auth:token", { detail: data }));
+        }
         
         processQueue(null, newAccessToken);
         return api(originalRequest);

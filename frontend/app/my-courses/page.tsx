@@ -64,14 +64,19 @@ export default function MyCoursesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {courses.map((course) => {
             return (
-              <CourseCard 
-                key={course.id} 
-                course={course} 
-                enrolledInfo={{
-                  completedLessons: course.progress?.completed_lessons || 0,
-                  totalLessons: course.progress?.total_lessons || course.stats?.lessons || 1
-                }}
-              />
+              <div key={course.id} className="flex flex-col gap-2">
+                <CourseCard
+                  course={course}
+                  enrolledInfo={{
+                    completedLessons: course.progress?.completed_lessons || 0,
+                    totalLessons: course.progress?.total_lessons || course.stats?.lessons || 1
+                  }}
+                />
+                {course.accessExpiresAt !== undefined && <p className={`text-sm font-medium ${course.accessExpired ? "text-rose-600" : "text-[var(--surface-strong)]"}`}>
+                  {course.accessExpired ? "Đã hết hạn học · " : "Thời hạn học: "}
+                  {course.accessExpiresAt ? new Date(course.accessExpiresAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "Vô thời hạn"}
+                </p>}
+              </div>
             );
           })}
         </div>

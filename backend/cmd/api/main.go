@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"edu-lms-backend/internal/config"
+	"edu-lms-backend/internal/modules/activation"
 	"edu-lms-backend/internal/modules/auth"
 	"edu-lms-backend/internal/modules/course"
 	"edu-lms-backend/internal/modules/home"
@@ -43,7 +44,8 @@ func main() {
 	}
 	courseService := course.NewService(courseRepo)
 	courseHandler := course.NewHandler(courseService)
-
+	activationRepo := activation.NewRepository(database)
+	activationHandler := activation.NewHandler(activation.NewService(activationRepo))
 
 	// 4. Setup Router
 	r := gin.Default()
@@ -63,7 +65,7 @@ func main() {
 	{
 		// Health check
 		apiGroup.GET("/ping", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"message": "pong from edu-lms-backend"})
+			c.JSON(http.StatusOK, gin.H{"message": "pong from edu-lms-backend", "activationAccessDuration": true})
 		})
 
 		// Auth Routes
@@ -79,12 +81,14 @@ func main() {
 		studentGroup := apiGroup.Group("/student")
 		studentGroup.Use(middleware.RequireAuth(cfg))
 		course.RegisterProtectedRoutes(studentGroup, courseHandler)
+		activation.RegisterStudentRoutes(studentGroup, activationHandler)
 
 		// Teacher Routes (Protected + Role)
 		teacherGroup := apiGroup.Group("/teacher")
 		teacherGroup.Use(middleware.RequireAuth(cfg))
 		teacherGroup.Use(middleware.RequireRole("TEACHER", "ADMIN"))
 		teacher.RegisterRoutes(teacherGroup, database)
+		activation.RegisterTeacherRoutes(teacherGroup, activationHandler)
 
 		// Example protected route
 		protected := apiGroup.Group("/protected")

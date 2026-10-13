@@ -571,8 +571,14 @@ export default function TeacherCategoriesPage() {
 
       {/* Modal Thêm danh mục mới (Option B: Tự do nhập type + tiếng Việt chuẩn) */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in-0">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl space-y-5">
+        <div
+          onClick={() => setIsCreateModalOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in-0 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl space-y-5 cursor-default"
+          >
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                 Thêm danh mục mới
@@ -684,8 +690,14 @@ export default function TeacherCategoriesPage() {
 
       {/* Modal Chỉnh sửa danh mục (Option B: strictly Vietnamese) */}
       {editTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in-0">
-          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl space-y-5">
+        <div
+          onClick={() => setEditTarget(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in-0 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl space-y-5 cursor-default"
+          >
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                 Chỉnh sửa danh mục
@@ -797,8 +809,14 @@ export default function TeacherCategoriesPage() {
 
       {/* Modal Xác nhận xóa */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in-0">
-          <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl space-y-4">
+        <div
+          onClick={() => setDeleteTarget(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in-0 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl space-y-4 cursor-default"
+          >
             <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
               <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/50">
                 <Trash2 className="size-5" />

@@ -196,6 +196,10 @@ func (h *Handler) MarkLessonCompleted(c *gin.Context) {
 
 	err := h.service.MarkLessonAsCompleted(userID.(string), lessonID)
 	if err != nil {
+		if err.Error() == "ENROLLMENT_REQUIRED" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Bạn chưa có quyền học hoặc quyền học đã hết hạn."})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark lesson as completed"})
 		return
 	}
@@ -221,6 +225,10 @@ func (h *Handler) GetLessonProgress(c *gin.Context) {
 
 	progress, err := h.service.GetLessonProgress(userID.(string), lessonID)
 	if err != nil {
+		if err.Error() == "ENROLLMENT_REQUIRED" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Bạn chưa có quyền học hoặc quyền học đã hết hạn."})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"message": "success",
 			"data": map[string]interface{}{

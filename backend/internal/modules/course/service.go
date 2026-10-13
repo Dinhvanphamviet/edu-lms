@@ -178,9 +178,23 @@ func (s *service) GetEnrolledCourses(userID string) ([]CourseWithProgressDTO, er
 }
 
 func (s *service) MarkLessonAsCompleted(userID, lessonID string) error {
+	allowed, err := s.repo.CanPlayLesson(userID, lessonID)
+	if err != nil {
+		return err
+	}
+	if !allowed {
+		return errors.New("ENROLLMENT_REQUIRED")
+	}
 	return s.repo.MarkLessonAsCompleted(userID, lessonID)
 }
 
 func (s *service) GetLessonProgress(userID, lessonID string) (*UserLessonProgress, error) {
+	allowed, err := s.repo.CanPlayLesson(userID, lessonID)
+	if err != nil {
+		return nil, err
+	}
+	if !allowed {
+		return nil, errors.New("ENROLLMENT_REQUIRED")
+	}
 	return s.repo.GetLessonProgress(userID, lessonID)
 }

@@ -117,6 +117,8 @@ export async function getCourseCurriculum(slug: string): Promise<CurriculumChapt
 }
 
 export interface CourseWithProgress extends Course {
+  accessExpiresAt: string | null;
+  accessExpired: boolean;
   progress: {
     completed_lessons: number;
     total_lessons: number;

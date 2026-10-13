@@ -55,8 +55,14 @@ export function LessonModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in-0">
-      <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl space-y-5">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in-0 cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-xl space-y-5 cursor-default"
+      >
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
             {editingLessonId ? "Chỉnh sửa bài học" : "Thêm bài học mới"}

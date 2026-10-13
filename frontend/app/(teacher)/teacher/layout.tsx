@@ -19,7 +19,7 @@ function TeacherLayoutContent({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "flex-1 flex flex-col min-h-screen relative transition-all duration-300 ease-in-out",
-          isCollapsed ? "md:ml-[72px]" : "md:ml-[260px]"
+          isCollapsed ? "md:ml-[72px]" : "md:ml-[260px]",
         )}
       >
         <TeacherHeader />

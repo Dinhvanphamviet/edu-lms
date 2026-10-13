@@ -7,7 +7,6 @@ import {
   Users,
   LayoutDashboard,
   PanelLeftClose,
-  PanelLeftOpen,
   X,
   GraduationCap,
   FolderTree,
@@ -129,41 +128,21 @@ export function TeacherSidebar() {
           className={cn(
             "border-b border-[var(--border-default)] shrink-0 transition-all duration-200",
             isCollapsed
-              ? "flex flex-col items-center gap-3 py-3.5 px-2"
+              ? "h-16 flex items-center justify-center px-2"
               : "h-16 flex items-center justify-between px-4"
           )}
         >
           {isCollapsed ? (
-            /* Khi thu nhỏ: Logo ở trên, nút mở rộng ở dưới */
-            <>
-              <Link
-                href="/teacher"
-                onClick={(e) => e.stopPropagation()}
-                className="group"
-              >
-                <div className="bg-gradient-to-br from-surface-strong-light to-surface-strong-dark size-9 rounded-xl flex items-center justify-center text-white shadow-sm shadow-surface-strong-light/20 group-hover:scale-105 transition-transform">
-                  <GraduationCap className="size-5" />
-                </div>
-              </Link>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleCollapse();
-                    }}
-                    className="size-9 flex items-center justify-center rounded-xl text-[var(--text-primary)]/70 hover:text-[var(--surface-strong)] hover:bg-[var(--surface-muted)] transition-all duration-200 active:scale-95"
-                  >
-                    <PanelLeftOpen className="size-5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={12}>
-                  Mở rộng thanh bên
-                </TooltipContent>
-              </Tooltip>
-            </>
+            /* Khi thu nhỏ: Chỉ hiển thị Logo */
+            <Link
+              href="/teacher"
+              onClick={(e) => e.stopPropagation()}
+              className="group"
+            >
+              <div className="bg-gradient-to-br from-surface-strong-light to-surface-strong-dark size-9 rounded-xl flex items-center justify-center text-white shadow-sm shadow-surface-strong-light/20 group-hover:scale-105 transition-transform">
+                <GraduationCap className="size-5" />
+              </div>
+            </Link>
           ) : (
             /* Khi mở rộng: Logo bên trái, nút Đóng thanh bên ở trên bên phải */
             <>
